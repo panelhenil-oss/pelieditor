@@ -1,0 +1,1388 @@
+-- ╔══════════════════════════════════════════════════════════╗
+-- ║   PELI EDITOR v6.2  ·  Script Generator                 ║
+-- ║   Generates Roli-style hub scripts with custom themes   ║
+-- ╚══════════════════════════════════════════════════════════╝
+
+-- ══ SINGLETON ══
+do
+    local cg = game:GetService("CoreGui")
+    local pg = game.Players.LocalPlayer.PlayerGui
+    local old = cg:FindFirstChild("PeliEditorV6") or pg:FindFirstChild("PeliEditorV6")
+    if old then old:Destroy() end
+end
+
+local player       = game.Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService   = game:GetService("RunService")
+
+-- ══════════════════════════════════════════════════════════
+--  CONFIG
+-- ══════════════════════════════════════════════════════════
+local CFG = {
+    ScriptName     = "MY HUB",
+    ScriptSubtitle = "Universal Script",
+    IconId         = "",
+    IconLetter     = "MH",
+    UseImageIcon   = false,
+
+    FName_SuperJump      = "Super Jump",
+    FName_AutoPlatform   = "Auto Platform",
+    FName_DuelWin        = "Duel Win",
+    FName_UltraSpin      = "Ultra Spin",
+    FName_BigPlatform    = "Big Platform",
+    FName_ShieldMode     = "Shield Mode",
+    FName_RemoveWaves    = "Remove Waves",
+    FName_ESP            = "ESP",
+    FName_ESPNames       = "Show Names",
+    FName_ESPDist        = "Distance",
+    FName_Tracers        = "Tracers",
+    FName_Fullbright     = "Fullbright",
+    FName_FPSBoost       = "FPS Boost",
+
+    SuperJump     = true,
+    AutoPlatform  = true,
+    DuelWin       = true,
+    UltraSpin     = true,
+    BigPlatform   = true,
+    ShieldMode    = true,
+    RemoveWaves   = true,
+    ESP           = true,
+    ESPNames      = true,
+    ESPDist       = true,
+    Tracers       = true,
+    Fullbright    = true,
+    FPSBoost      = true,
+
+    ThemeIndex    = 1,
+    Platform      = nil,
+}
+
+-- ══════════════════════════════════════════════════════════
+--  COLOR THEMES
+-- ══════════════════════════════════════════════════════════
+local THEMES = {
+    { name="🔴  Crimson",     R={210,35,35},   RL={255,80,80},   RD={130,10,10},  BG={10,10,12},  Panel={18,18,22},  Row={24,22,26},  RowOn={45,18,18},  Dark={28,18,18},  Dim={130,115,115}, Divider={55,35,35}  },
+    { name="🔵  Ocean Blue",  R={30,100,255},  RL={80,150,255},  RD={10,50,160},  BG={8,10,18},   Panel={12,16,28},  Row={16,20,35},  RowOn={12,22,55},  Dark={10,14,35},  Dim={100,115,155}, Divider={25,40,90}  },
+    { name="🟢  Neon Green",  R={30,210,80},   RL={80,255,120},  RD={10,120,40},  BG={8,14,10},   Panel={12,20,14},  Row={16,26,18},  RowOn={12,50,22},  Dark={10,28,14},  Dim={100,145,110}, Divider={22,75,35}  },
+    { name="🟣  Violet",      R={150,40,255},  RL={190,100,255}, RD={80,10,160},  BG={12,8,18},   Panel={18,12,28},  Row={22,16,35},  RowOn={35,12,60},  Dark={20,10,38},  Dim={120,100,155}, Divider={60,25,100} },
+    { name="🟠  Orange Fire", R={255,130,20},  RL={255,175,80},  RD={160,70,5},   BG={14,10,6},   Panel={22,15,8},   Row={28,18,10},  RowOn={55,28,8},   Dark={30,16,6},   Dim={145,120,90},  Divider={90,45,15}  },
+    { name="🩷  Pink Rose",   R={255,60,160},  RL={255,120,200}, RD={160,10,90},  BG={14,8,12},   Panel={22,12,18},  Row={28,16,22},  RowOn={55,12,38},  Dark={30,10,22},  Dim={145,100,125}, Divider={90,20,60}  },
+    { name="🩵  Aqua Cyan",   R={0,210,220},   RL={60,240,250},  RD={0,120,130},  BG={6,12,14},   Panel={10,18,20},  Row={14,24,26},  RowOn={8,48,52},   Dark={8,22,25},   Dim={90,135,140},  Divider={15,75,80}  },
+    { name="🟡  Gold",        R={220,185,0},   RL={255,225,60},  RD={130,105,0},  BG={12,12,6},   Panel={20,18,8},   Row={26,24,10},  RowOn={52,44,8},   Dark={28,22,6},   Dim={140,130,80},  Divider={85,70,15}  },
+    { name="⚪  Silver",      R={180,180,195}, RL={220,220,235}, RD={100,100,110},BG={10,10,12},  Panel={16,16,20},  Row={22,22,26},  RowOn={40,40,50},  Dark={18,18,22},  Dim={120,120,130}, Divider={60,60,70}  },
+    { name="🖤  Dark Matter", R={90,90,100},   RL={140,140,155}, RD={40,40,48},   BG={5,5,6},     Panel={10,10,12},  Row={16,16,18},  RowOn={28,28,32},  Dark={12,12,14},  Dim={80,80,88},    Divider={35,35,40}  },
+}
+
+local generatedScript = ""
+
+-- ══════════════════════════════════════════════════════════
+--  EDITOR UI COLORS
+-- ══════════════════════════════════════════════════════════
+local EC = {
+    BG     = Color3.fromRGB(10,10,12),
+    Panel  = Color3.fromRGB(18,18,22),
+    Frame  = Color3.fromRGB(26,26,32),
+    Row    = Color3.fromRGB(32,32,40),
+    W      = Color3.fromRGB(255,255,255),
+    Dim    = Color3.fromRGB(130,130,145),
+    Acc    = Color3.fromRGB(90,130,255),
+    AccDim = Color3.fromRGB(30,50,120),
+    Green  = Color3.fromRGB(50,210,80),
+    Red    = Color3.fromRGB(220,60,60),
+    Gray   = Color3.fromRGB(55,55,65),
+    LGray  = Color3.fromRGB(90,90,105),
+}
+
+-- ══════════════════════════════════════════════════════════
+--  UTILS
+-- ══════════════════════════════════════════════════════════
+local function T(o,p,d,s)
+    if not o or not o.Parent then return end
+    pcall(function() TweenService:Create(o,TweenInfo.new(d or .2,s or Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play() end)
+end
+local function corner(p,r) local c=Instance.new("UICorner",p); c.CornerRadius=UDim.new(0,r or 8); return c end
+local function stroke(p,col,th,tr) local s=Instance.new("UIStroke",p); s.Color=col; s.Thickness=th or 1; if tr then s.Transparency=tr end; return s end
+local function grad(p,c1,c2,rot)
+    local g=Instance.new("UIGradient",p)
+    g.Color=ColorSequence.new{ColorSequenceKeypoint.new(0,c1),ColorSequenceKeypoint.new(1,c2)}
+    g.Rotation=rot or 90
+end
+local function notify(tx) pcall(function() game.StarterGui:SetCore("SendNotification",{Title="PELI EDITOR",Text=tx,Duration=2.5}) end) end
+
+-- Strip everything except digits from an icon ID string
+local function cleanId(s) return (s or ""):gsub("[^%d]","") end
+
+-- ══════════════════════════════════════════════════════════
+--  SCREEN GUI
+-- ══════════════════════════════════════════════════════════
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PeliEditorV6"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+pcall(function() screenGui.Parent = game:GetService("CoreGui") end)
+if not screenGui.Parent then screenGui.Parent = player.PlayerGui end
+
+-- ══════════════════════════════════════════════════════════
+--  PLATFORM SELECT MENU
+-- ══════════════════════════════════════════════════════════
+local platMenu = Instance.new("Frame", screenGui)
+platMenu.Size = UDim2.new(0, 240, 0, 130)
+platMenu.Position = UDim2.new(0.5, -120, 0.5, -65)
+platMenu.BackgroundColor3 = EC.Panel
+platMenu.BorderSizePixel = 0
+platMenu.Active = true
+platMenu.Draggable = true
+platMenu.ZIndex = 20
+corner(platMenu, 14)
+stroke(platMenu, EC.Acc, 1.5, 0.1)
+
+local platHdr = Instance.new("Frame", platMenu)
+platHdr.Size = UDim2.new(1,0,0,42)
+platHdr.BackgroundColor3 = EC.AccDim
+platHdr.BorderSizePixel = 0
+platHdr.ZIndex = 21
+corner(platHdr, 14)
+grad(platHdr, Color3.fromRGB(40,60,160), Color3.fromRGB(18,18,28))
+local platHdrCover = Instance.new("Frame", platHdr)
+platHdrCover.Size = UDim2.new(1,0,0,14)
+platHdrCover.Position = UDim2.new(0,0,1,-14)
+platHdrCover.BackgroundColor3 = Color3.fromRGB(18,18,28)
+platHdrCover.BorderSizePixel = 0
+platHdrCover.ZIndex = 21
+
+local platHdrTitle = Instance.new("TextLabel", platHdr)
+platHdrTitle.Size = UDim2.new(1,-10,1,0)
+platHdrTitle.Position = UDim2.new(0,10,0,0)
+platHdrTitle.BackgroundTransparency = 1
+platHdrTitle.Text = "⚡  PELI EDITOR v6"
+platHdrTitle.TextColor3 = EC.W
+platHdrTitle.Font = Enum.Font.GothamBlack
+platHdrTitle.TextSize = 15
+platHdrTitle.TextXAlignment = Enum.TextXAlignment.Left
+platHdrTitle.ZIndex = 22
+
+local platSub = Instance.new("TextLabel", platMenu)
+platSub.Size = UDim2.new(1,-16,0,16)
+platSub.Position = UDim2.new(0,8,0,48)
+platSub.BackgroundTransparency = 1
+platSub.Text = "Select your device:"
+platSub.TextColor3 = EC.Dim
+platSub.Font = Enum.Font.GothamBold
+platSub.TextSize = 10
+platSub.TextXAlignment = Enum.TextXAlignment.Left
+platSub.ZIndex = 21
+
+local pcBtn = Instance.new("TextButton", platMenu)
+pcBtn.Size = UDim2.new(0, 100, 0, 36)
+pcBtn.Position = UDim2.new(0, 8, 0, 70)
+pcBtn.Text = "🖥  PC"
+pcBtn.BackgroundColor3 = EC.Acc
+pcBtn.TextColor3 = EC.W
+pcBtn.Font = Enum.Font.GothamBold
+pcBtn.TextSize = 12
+pcBtn.BorderSizePixel = 0
+pcBtn.ZIndex = 21
+corner(pcBtn, 9)
+
+local mobileBtn = Instance.new("TextButton", platMenu)
+mobileBtn.Size = UDim2.new(0, 100, 0, 36)
+mobileBtn.Position = UDim2.new(1, -108, 0, 70)
+mobileBtn.Text = "📱  Mobile"
+mobileBtn.BackgroundColor3 = EC.Frame
+mobileBtn.TextColor3 = EC.W
+mobileBtn.Font = Enum.Font.GothamBold
+mobileBtn.TextSize = 12
+mobileBtn.BorderSizePixel = 0
+mobileBtn.ZIndex = 21
+corner(mobileBtn, 9)
+stroke(mobileBtn, EC.Acc, 1, 0.3)
+
+pcBtn.MouseEnter:Connect(function() T(pcBtn,{BackgroundColor3=Color3.fromRGB(110,155,255)},0.1) end)
+pcBtn.MouseLeave:Connect(function() T(pcBtn,{BackgroundColor3=EC.Acc},0.1) end)
+mobileBtn.MouseEnter:Connect(function() T(mobileBtn,{BackgroundColor3=EC.Row},0.1) end)
+mobileBtn.MouseLeave:Connect(function() T(mobileBtn,{BackgroundColor3=EC.Frame},0.1) end)
+
+platMenu.Size = UDim2.new(0,0,0,0)
+platMenu.Position = UDim2.new(0.5,0,0.5,0)
+T(platMenu,{Size=UDim2.new(0,240,0,130),Position=UDim2.new(0.5,-120,0.5,-65)},0.5,Enum.EasingStyle.Back)
+
+-- ══════════════════════════════════════════════════════════
+--  MAIN EDITOR FRAME
+-- ══════════════════════════════════════════════════════════
+local MW_PC, MH_PC = 600, 390
+local MW_MB, MH_MB = 400, 310
+
+-- ══════════════════════════════════════════════════════════
+--  FLOATING ICON (Peli Editor's own icon — NEVER changes)
+-- ══════════════════════════════════════════════════════════
+local iconBtn = Instance.new("ImageButton", screenGui)
+iconBtn.Size = UDim2.new(0,56,0,56)
+iconBtn.Position = UDim2.new(0,18,0,18)
+iconBtn.BackgroundColor3 = EC.BG
+iconBtn.BorderSizePixel = 0
+-- Peli Editor icon is always fixed — never changes
+iconBtn.Image = "rbxassetid://73418556711551"
+iconBtn.ScaleType = Enum.ScaleType.Fit
+iconBtn.Active = true
+iconBtn.Draggable = true
+iconBtn.Visible = false
+corner(iconBtn,12)
+stroke(iconBtn,EC.Acc,2,0.1)
+
+local iconGlow = Instance.new("Frame",iconBtn)
+iconGlow.Size = UDim2.new(1,14,1,14)
+iconGlow.Position = UDim2.new(0,-7,0,-7)
+iconGlow.BackgroundColor3 = EC.Acc
+iconGlow.BackgroundTransparency = 0.75
+iconGlow.BorderSizePixel = 0
+iconGlow.ZIndex = 0
+corner(iconGlow,18)
+
+local mainFrame = Instance.new("Frame",screenGui)
+mainFrame.Size = UDim2.new(0,MW_PC,0,MH_PC)
+mainFrame.Position = UDim2.new(0.5,-MW_PC/2,0.5,-MH_PC/2)
+mainFrame.BackgroundColor3 = EC.BG
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Visible = false
+mainFrame.ClipsDescendants = true
+mainFrame.ZIndex = 5
+corner(mainFrame,14)
+stroke(mainFrame,EC.Acc,1.5,0.1)
+
+local innerGlow = Instance.new("Frame",mainFrame)
+innerGlow.Size = UDim2.new(1,-4,1,-4)
+innerGlow.Position = UDim2.new(0,2,0,2)
+innerGlow.BackgroundColor3 = EC.Acc
+innerGlow.BackgroundTransparency = 0.96
+innerGlow.BorderSizePixel = 0
+innerGlow.ZIndex = 4
+corner(innerGlow,13)
+
+-- Header (Peli Editor header — always has its own fixed icon)
+local header = Instance.new("Frame",mainFrame)
+header.Size = UDim2.new(1,0,0,50)
+header.BackgroundColor3 = EC.BG
+header.BorderSizePixel = 0
+header.ZIndex = 10
+corner(header,14)
+grad(header,Color3.fromRGB(18,18,28),Color3.fromRGB(10,10,14))
+
+local headerCover = Instance.new("Frame",header)
+headerCover.Size = UDim2.new(1,0,0,14)
+headerCover.Position = UDim2.new(0,0,1,-14)
+headerCover.BackgroundColor3 = Color3.fromRGB(10,10,14)
+headerCover.BorderSizePixel = 0
+headerCover.ZIndex = 10
+
+local headerLine = Instance.new("Frame",header)
+headerLine.Size = UDim2.new(1,0,0,2)
+headerLine.Position = UDim2.new(0,0,1,-2)
+headerLine.BackgroundColor3 = EC.Acc
+headerLine.BackgroundTransparency = 0.3
+headerLine.BorderSizePixel = 0
+headerLine.ZIndex = 11
+
+-- ══ PELI EDITOR HEADER ICON — always fixed, never changed ══
+local hLogo = Instance.new("ImageLabel",header)
+hLogo.Size = UDim2.new(0,32,0,32)
+hLogo.Position = UDim2.new(0,12,0.5,-16)
+hLogo.BackgroundColor3 = EC.AccDim
+hLogo.Image = "rbxassetid://73418556711551"   -- Peli Editor fixed icon
+hLogo.ScaleType = Enum.ScaleType.Fit
+hLogo.BorderSizePixel = 0
+hLogo.ZIndex = 12
+corner(hLogo,8)
+
+local hTitle = Instance.new("TextLabel",header)
+hTitle.Size = UDim2.new(0,200,0,20)
+hTitle.Position = UDim2.new(0,52,0,7)
+hTitle.BackgroundTransparency = 1
+hTitle.Text = "PELI EDITOR"
+hTitle.TextColor3 = EC.W
+hTitle.Font = Enum.Font.GothamBlack
+hTitle.TextSize = 17
+hTitle.TextXAlignment = Enum.TextXAlignment.Left
+hTitle.ZIndex = 12
+
+local hSub = Instance.new("TextLabel",header)
+hSub.Size = UDim2.new(0,260,0,14)
+hSub.Position = UDim2.new(0,52,0,28)
+hSub.BackgroundTransparency = 1
+hSub.Text = "Script Generator v6.2  ·  Roli-style output"
+hSub.TextColor3 = EC.Dim
+hSub.Font = Enum.Font.Gotham
+hSub.TextSize = 9
+hSub.TextXAlignment = Enum.TextXAlignment.Left
+hSub.ZIndex = 12
+
+local platBadge = Instance.new("Frame",header)
+platBadge.Size = UDim2.new(0,62,0,18)
+platBadge.Position = UDim2.new(0,316,0.5,-9)
+platBadge.BackgroundColor3 = Color3.fromRGB(15,30,15)
+platBadge.BorderSizePixel = 0
+platBadge.ZIndex = 12
+corner(platBadge,5)
+stroke(platBadge,EC.Green,1,0.4)
+local platBadgeTxt = Instance.new("TextLabel",platBadge)
+platBadgeTxt.Size = UDim2.new(1,0,1,0)
+platBadgeTxt.BackgroundTransparency = 1
+platBadgeTxt.Text = "🖥  PC"
+platBadgeTxt.TextColor3 = EC.Green
+platBadgeTxt.Font = Enum.Font.GothamBold
+platBadgeTxt.TextSize = 9
+platBadgeTxt.ZIndex = 13
+
+local function mkHeaderBtn(text,xOff,bgCol)
+    local btn = Instance.new("TextButton",header)
+    btn.Size = UDim2.new(0,28,0,28)
+    btn.Position = UDim2.new(1,xOff,0.5,-14)
+    btn.Text = text; btn.BackgroundColor3 = bgCol; btn.TextColor3 = EC.W
+    btn.Font = Enum.Font.GothamBold; btn.TextSize = 16; btn.BorderSizePixel = 0; btn.ZIndex = 13
+    corner(btn,7); return btn
+end
+local minimizeBtn = mkHeaderBtn("—",-64,EC.Frame)
+local closeBtn    = mkHeaderBtn("×",-32,EC.Red)
+closeBtn.MouseEnter:Connect(function() T(closeBtn,{BackgroundColor3=Color3.fromRGB(255,80,80)},0.15) end)
+closeBtn.MouseLeave:Connect(function() T(closeBtn,{BackgroundColor3=EC.Red},0.15) end)
+
+-- Sidebar
+local sidebarW = 120
+local sidebar = Instance.new("Frame",mainFrame)
+sidebar.Size = UDim2.new(0,sidebarW,1,-54)
+sidebar.Position = UDim2.new(0,6,0,54)
+sidebar.BackgroundColor3 = EC.Panel
+sidebar.BorderSizePixel = 0; sidebar.ZIndex = 6
+corner(sidebar,12); stroke(sidebar,EC.Gray,1,0.6)
+local sideLayout = Instance.new("UIListLayout",sidebar)
+sideLayout.Padding = UDim.new(0,3); sideLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local sidePad = Instance.new("UIPadding",sidebar)
+sidePad.PaddingTop=UDim.new(0,5); sidePad.PaddingLeft=UDim.new(0,4); sidePad.PaddingRight=UDim.new(0,4)
+
+local contentArea = Instance.new("Frame",mainFrame)
+contentArea.Size = UDim2.new(1,-sidebarW-18,1,-58)
+contentArea.Position = UDim2.new(0,sidebarW+12,0,54)
+contentArea.BackgroundTransparency = 1; contentArea.ZIndex = 6
+
+-- ══════════════════════════════════════════════════════════
+--  TAB SYSTEM
+-- ══════════════════════════════════════════════════════════
+local TABS = {"INFO","ICON","THEME","FEATURES","GENERATE"}
+local tabContainers = {}
+local tabBtns = {}
+
+for i,tabName in ipairs(TABS) do
+    local btn = Instance.new("TextButton",sidebar)
+    btn.LayoutOrder = i; btn.Size = UDim2.new(1,0,0,32)
+    btn.BackgroundColor3 = (tabName=="INFO") and EC.Acc or EC.Frame
+    btn.Text = tabName; btn.TextColor3 = (tabName=="INFO") and EC.W or EC.Dim
+    btn.Font = Enum.Font.GothamBold; btn.TextSize = 10; btn.BorderSizePixel = 0; btn.ZIndex = 8
+    corner(btn,8)
+    if tabName=="GENERATE" then btn.BackgroundColor3=EC.Green; btn.TextColor3=EC.W end
+    tabBtns[tabName] = btn
+
+    local scroll = Instance.new("ScrollingFrame",contentArea)
+    scroll.Name = tabName; scroll.Size = UDim2.new(1,0,1,0)
+    scroll.BackgroundTransparency = 1; scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 3; scroll.ScrollBarImageColor3 = EC.Acc
+    scroll.Visible = (tabName=="INFO"); scroll.CanvasSize = UDim2.new(0,0,0,600); scroll.ZIndex = 7
+    tabContainers[tabName] = scroll
+end
+
+local function switchTab(name)
+    for n,btn in pairs(tabBtns) do
+        if n==name then btn.BackgroundColor3=(n=="GENERATE") and EC.Green or EC.Acc; btn.TextColor3=EC.W
+        else btn.BackgroundColor3=(n=="GENERATE") and Color3.fromRGB(30,110,50) or EC.Frame; btn.TextColor3=(n=="GENERATE") and EC.W or EC.Dim end
+    end
+    for n,c in pairs(tabContainers) do c.Visible=(n==name) end
+end
+for _,tabName in ipairs(TABS) do
+    tabBtns[tabName].MouseButton1Click:Connect(function() switchTab(tabName) end)
+end
+
+-- ══════════════════════════════════════════════════════════
+--  COMPONENT HELPERS
+-- ══════════════════════════════════════════════════════════
+local function mkInput(parent,labelText,cfgKey,posY,placeholder,isIconField)
+    local box = Instance.new("Frame",parent)
+    box.Size=UDim2.new(1,-8,0,52); box.Position=UDim2.new(0,4,0,posY)
+    box.BackgroundColor3=EC.Frame; box.BorderSizePixel=0; box.ZIndex=8
+    corner(box,9); stroke(box,EC.Gray,1,0.5)
+
+    local lbl = Instance.new("TextLabel",box)
+    lbl.Size=UDim2.new(1,-10,0,16); lbl.Position=UDim2.new(0,6,0,4)
+    lbl.BackgroundTransparency=1; lbl.Text=labelText; lbl.TextColor3=EC.Dim
+    lbl.Font=Enum.Font.GothamBold; lbl.TextSize=9; lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=9
+
+    local tb = Instance.new("TextBox",box)
+    tb.Size=UDim2.new(1,-12,0,24); tb.Position=UDim2.new(0,6,0,22)
+    tb.BackgroundColor3=EC.BG; tb.Text=CFG[cfgKey] or ""; tb.PlaceholderText=placeholder or ""
+    tb.TextColor3=EC.W; tb.PlaceholderColor3=EC.LGray; tb.Font=Enum.Font.GothamBold; tb.TextSize=11
+    tb.BorderSizePixel=0; tb.ClearTextOnFocus=false; tb.ZIndex=9
+    corner(tb,6); stroke(tb,EC.Gray,1,0.7)
+
+    local function update()
+        if isIconField then
+            local digits = cleanId(tb.Text)
+            CFG[cfgKey] = digits
+        else
+            CFG[cfgKey] = tb.Text
+        end
+    end
+    tb.Changed:Connect(function(prop) if prop=="Text" then update() end end)
+    tb.FocusLost:Connect(function()
+        update()
+        if isIconField then tb.Text = CFG[cfgKey] end
+        T(box,{BackgroundColor3=EC.Frame},0.15)
+    end)
+    tb.Focused:Connect(function() T(box,{BackgroundColor3=EC.Row},0.15) end)
+    return box, tb
+end
+
+local function mkSection(parent,text,posY)
+    local f = Instance.new("Frame",parent)
+    f.Size=UDim2.new(1,-8,0,24); f.Position=UDim2.new(0,4,0,posY)
+    f.BackgroundColor3=EC.Panel; f.BorderSizePixel=0; f.ZIndex=8
+    corner(f,7); stroke(f,EC.Acc,1,0.5)
+    local line = Instance.new("Frame",f)
+    line.Size=UDim2.new(0,3,0,14); line.Position=UDim2.new(0,6,0.5,-7)
+    line.BackgroundColor3=EC.Acc; line.BorderSizePixel=0; line.ZIndex=9; corner(line,2)
+    local lbl = Instance.new("TextLabel",f)
+    lbl.Size=UDim2.new(1,-18,1,0); lbl.Position=UDim2.new(0,14,0,0)
+    lbl.BackgroundTransparency=1; lbl.Text=text; lbl.TextColor3=EC.Acc
+    lbl.Font=Enum.Font.GothamBold; lbl.TextSize=9; lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=9
+    return f
+end
+
+local function mkFeatureRow(parent,labelKey,featureKey,posY)
+    local row = Instance.new("Frame",parent)
+    row.Size=UDim2.new(1,-8,0,52); row.Position=UDim2.new(0,4,0,posY)
+    row.BackgroundColor3=EC.Frame; row.BorderSizePixel=0; row.ZIndex=8; corner(row,9)
+    local initOn = CFG[featureKey]
+    local st = stroke(row, initOn and EC.Acc or EC.Gray, 1, initOn and 0.3 or 0.6)
+
+    local lbl = Instance.new("TextLabel",row)
+    lbl.Size=UDim2.new(0,80,0,16); lbl.Position=UDim2.new(0,6,0,4)
+    lbl.BackgroundTransparency=1; lbl.Text="DISPLAY NAME"; lbl.TextColor3=EC.Dim
+    lbl.Font=Enum.Font.GothamBold; lbl.TextSize=8; lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=9
+
+    local nameBox = Instance.new("TextBox",row)
+    nameBox.Size=UDim2.new(0,180,0,22); nameBox.Position=UDim2.new(0,6,0,22)
+    nameBox.BackgroundColor3=EC.BG; nameBox.Text=CFG[labelKey] or ""; nameBox.TextColor3=EC.W
+    nameBox.PlaceholderColor3=EC.LGray; nameBox.Font=Enum.Font.GothamBold; nameBox.TextSize=10
+    nameBox.BorderSizePixel=0; nameBox.ClearTextOnFocus=false; nameBox.ZIndex=9
+    corner(nameBox,5); stroke(nameBox,EC.Gray,1,0.7)
+    nameBox.Changed:Connect(function(p) if p=="Text" then CFG[labelKey]=nameBox.Text end end)
+    nameBox.FocusLost:Connect(function() CFG[labelKey]=nameBox.Text end)
+
+    local togBg = Instance.new("Frame",row)
+    togBg.Size=UDim2.new(0,48,0,24); togBg.Position=UDim2.new(1,-58,0.5,-12)
+    togBg.BackgroundColor3=initOn and EC.AccDim or EC.Gray; togBg.BorderSizePixel=0; togBg.ZIndex=9
+    corner(togBg,12); stroke(togBg, initOn and EC.Acc or EC.LGray, 1, 0.3)
+
+    local togKnob = Instance.new("Frame",togBg)
+    togKnob.Size=UDim2.new(0,20,0,20)
+    togKnob.Position=initOn and UDim2.new(1,-22,0.5,-10) or UDim2.new(0,2,0.5,-10)
+    togKnob.BackgroundColor3=initOn and EC.Acc or EC.Dim; togKnob.BorderSizePixel=0; togKnob.ZIndex=10; corner(togKnob,10)
+
+    local clickBtn = Instance.new("TextButton",row)
+    clickBtn.Size=UDim2.new(0,60,1,0); clickBtn.Position=UDim2.new(1,-68,0,0)
+    clickBtn.BackgroundTransparency=1; clickBtn.Text=""; clickBtn.ZIndex=11
+
+    local statusLbl = Instance.new("TextLabel",row)
+    statusLbl.Size=UDim2.new(0,60,1,0); statusLbl.Position=UDim2.new(1,-130,0,0)
+    statusLbl.BackgroundTransparency=1; statusLbl.Text=initOn and "INCLUDE" or "SKIP"
+    statusLbl.TextColor3=initOn and EC.Acc or EC.Dim; statusLbl.Font=Enum.Font.GothamBold
+    statusLbl.TextSize=8; statusLbl.TextXAlignment=Enum.TextXAlignment.Right; statusLbl.ZIndex=9
+
+    clickBtn.MouseButton1Click:Connect(function()
+        CFG[featureKey]=not CFG[featureKey]; local on=CFG[featureKey]
+        T(togKnob,{Position=on and UDim2.new(1,-22,0.5,-10) or UDim2.new(0,2,0.5,-10),BackgroundColor3=on and EC.Acc or EC.Dim},0.18)
+        T(togBg,{BackgroundColor3=on and EC.AccDim or EC.Gray},0.18)
+        st.Color=on and EC.Acc or EC.Gray; st.Transparency=on and 0.3 or 0.6
+        statusLbl.Text=on and "INCLUDE" or "SKIP"; statusLbl.TextColor3=on and EC.Acc or EC.Dim
+    end)
+end
+
+-- ══════════════════════════════════════════════════════════
+--  POPULATE TABS
+-- ══════════════════════════════════════════════════════════
+
+-- ── INFO TAB ──
+local infoTab = tabContainers["INFO"]
+infoTab.CanvasSize = UDim2.new(0,0,0,220)
+mkSection(infoTab,"SCRIPT IDENTITY",6)
+mkInput(infoTab,"Script Name","ScriptName",36,"My Hub")
+mkInput(infoTab,"Subtitle","ScriptSubtitle",94,"Universal Script")
+mkSection(infoTab,"FALLBACK LETTERS  (used when no image icon)",158)
+mkInput(infoTab,"1-2 Letters","IconLetter",188,"MH")
+
+-- ── ICON TAB ──
+-- NOTE: This tab configures the icon for the GENERATED script, not Peli Editor itself.
+local iconTab = tabContainers["ICON"]
+iconTab.CanvasSize = UDim2.new(0,0,0,360)
+
+mkSection(iconTab,"GENERATED SCRIPT ICON TYPE",6)
+
+local iconNote2 = Instance.new("TextLabel",iconTab)
+iconNote2.Size=UDim2.new(1,-8,0,18); iconNote2.Position=UDim2.new(0,4,0,36)
+iconNote2.BackgroundColor3=Color3.fromRGB(20,15,8); iconNote2.BorderSizePixel=0
+iconNote2.Text="  ℹ  This sets the icon shown in the generated hub script"
+iconNote2.TextColor3=Color3.fromRGB(220,160,50); iconNote2.Font=Enum.Font.GothamBold; iconNote2.TextSize=8
+iconNote2.TextXAlignment=Enum.TextXAlignment.Left; iconNote2.ZIndex=8; corner(iconNote2,5)
+
+local iconTypeBg = Instance.new("Frame",iconTab)
+iconTypeBg.Size=UDim2.new(1,-8,0,44); iconTypeBg.Position=UDim2.new(0,4,0,60)
+iconTypeBg.BackgroundColor3=EC.Frame; iconTypeBg.BorderSizePixel=0; iconTypeBg.ZIndex=8
+corner(iconTypeBg,9); stroke(iconTypeBg,EC.Gray,1,0.5)
+
+local imgModeBtn = Instance.new("TextButton",iconTypeBg)
+imgModeBtn.Size=UDim2.new(0.48,-4,0,28); imgModeBtn.Position=UDim2.new(0,4,0.5,-14)
+imgModeBtn.Text="🖼  IMAGE ID"; imgModeBtn.BackgroundColor3=EC.Row
+imgModeBtn.TextColor3=EC.W; imgModeBtn.Font=Enum.Font.GothamBold; imgModeBtn.TextSize=9
+imgModeBtn.BorderSizePixel=0; imgModeBtn.ZIndex=9; corner(imgModeBtn,7)
+
+local letModeBtn = Instance.new("TextButton",iconTypeBg)
+letModeBtn.Size=UDim2.new(0.48,-4,0,28); letModeBtn.Position=UDim2.new(0.52,-2,0.5,-14)
+letModeBtn.Text="🔤  LETTERS"; letModeBtn.BackgroundColor3=EC.Acc
+letModeBtn.TextColor3=EC.W; letModeBtn.Font=Enum.Font.GothamBold; letModeBtn.TextSize=9
+letModeBtn.BorderSizePixel=0; letModeBtn.ZIndex=9; corner(letModeBtn,7)
+
+imgModeBtn.MouseButton1Click:Connect(function()
+    CFG.UseImageIcon=true; T(imgModeBtn,{BackgroundColor3=EC.Acc},0.15); T(letModeBtn,{BackgroundColor3=EC.Row},0.15)
+end)
+letModeBtn.MouseButton1Click:Connect(function()
+    CFG.UseImageIcon=false; T(letModeBtn,{BackgroundColor3=EC.Acc},0.15); T(imgModeBtn,{BackgroundColor3=EC.Row},0.15)
+end)
+
+mkSection(iconTab,"IMAGE ICON  (paste numbers only)",114)
+
+local iconNote = Instance.new("TextLabel",iconTab)
+iconNote.Size=UDim2.new(1,-8,0,18); iconNote.Position=UDim2.new(0,4,0,144)
+iconNote.BackgroundColor3=Color3.fromRGB(15,20,35); iconNote.BorderSizePixel=0
+iconNote.Text="  ℹ  Example: 136162746962211"
+iconNote.TextColor3=EC.Acc; iconNote.Font=Enum.Font.Gotham; iconNote.TextSize=8
+iconNote.TextXAlignment=Enum.TextXAlignment.Left; iconNote.ZIndex=8; corner(iconNote,5)
+
+mkSection(iconTab,"ASSET ID  (updates preview instantly)",168)
+
+local idBox_container = Instance.new("Frame",iconTab)
+idBox_container.Size=UDim2.new(1,-8,0,52); idBox_container.Position=UDim2.new(0,4,0,198)
+idBox_container.BackgroundColor3=EC.Frame; idBox_container.BorderSizePixel=0; idBox_container.ZIndex=8
+corner(idBox_container,9); stroke(idBox_container,EC.Gray,1,0.5)
+
+local idLbl2 = Instance.new("TextLabel",idBox_container)
+idLbl2.Size=UDim2.new(1,-10,0,16); idLbl2.Position=UDim2.new(0,6,0,4)
+idLbl2.BackgroundTransparency=1; idLbl2.Text="Icon Asset ID (for generated script)"
+idLbl2.TextColor3=EC.Dim; idLbl2.Font=Enum.Font.GothamBold; idLbl2.TextSize=9
+idLbl2.TextXAlignment=Enum.TextXAlignment.Left; idLbl2.ZIndex=9
+
+local iconIdBox = Instance.new("TextBox",idBox_container)
+iconIdBox.Size=UDim2.new(1,-12,0,24); iconIdBox.Position=UDim2.new(0,6,0,22)
+iconIdBox.BackgroundColor3=EC.BG; iconIdBox.Text=""; iconIdBox.PlaceholderText="e.g. 136162746962211"
+iconIdBox.TextColor3=EC.W; iconIdBox.PlaceholderColor3=EC.LGray
+iconIdBox.Font=Enum.Font.GothamBold; iconIdBox.TextSize=11
+iconIdBox.BorderSizePixel=0; iconIdBox.ClearTextOnFocus=false; iconIdBox.ZIndex=9
+corner(iconIdBox,6); stroke(iconIdBox,EC.Gray,1,0.7)
+
+mkSection(iconTab,"PREVIEW  (generated script icon)",258)
+
+local prevBox = Instance.new("Frame",iconTab)
+prevBox.Size=UDim2.new(1,-8,0,70); prevBox.Position=UDim2.new(0,4,0,288)
+prevBox.BackgroundColor3=EC.Frame; prevBox.BorderSizePixel=0; prevBox.ZIndex=8
+corner(prevBox,10); stroke(prevBox,EC.Gray,1,0.5)
+
+local prevIcon = Instance.new("ImageLabel",prevBox)
+prevIcon.Size=UDim2.new(0,54,0,54); prevIcon.Position=UDim2.new(0.5,-27,0.5,-27)
+prevIcon.BackgroundColor3=EC.BG; prevIcon.Image=""
+prevIcon.ScaleType=Enum.ScaleType.Fit; prevIcon.BorderSizePixel=0; prevIcon.ZIndex=9
+corner(prevIcon,10); stroke(prevIcon,EC.Acc,2,0.2)
+
+local prevLetterLbl2 = Instance.new("TextLabel",prevIcon)
+prevLetterLbl2.Size=UDim2.new(1,0,1,0); prevLetterLbl2.BackgroundTransparency=1
+prevLetterLbl2.Text=CFG.IconLetter:sub(1,2):upper(); prevLetterLbl2.TextColor3=EC.Acc
+prevLetterLbl2.Font=Enum.Font.GothamBlack; prevLetterLbl2.TextSize=22; prevLetterLbl2.ZIndex=10
+
+local prevStatusLbl = Instance.new("TextLabel",iconTab)
+prevStatusLbl.Size=UDim2.new(1,-8,0,14); prevStatusLbl.Position=UDim2.new(0,4,0,362)
+prevStatusLbl.BackgroundTransparency=1; prevStatusLbl.Text="No ID — letter icon will be used"
+prevStatusLbl.TextColor3=EC.Dim; prevStatusLbl.Font=Enum.Font.GothamBold
+prevStatusLbl.TextSize=9; prevStatusLbl.TextXAlignment=Enum.TextXAlignment.Left; prevStatusLbl.ZIndex=8
+
+iconTab.CanvasSize = UDim2.new(0,0,0,380)
+
+-- ── Live update ONLY the preview (not Peli Editor icon) ──
+local function applyIconId(raw)
+    local id = cleanId(raw)
+    CFG.IconId = id
+    if id ~= "" then
+        local url = "rbxassetid://"..id
+        prevIcon.Image = url
+        -- NOTE: iconBtn (Peli Editor icon) is NEVER touched here
+        prevLetterLbl2.Text = ""
+        prevStatusLbl.Text  = "✓ Image set  (ID: "..id..")"
+        prevStatusLbl.TextColor3 = EC.Green
+    else
+        prevIcon.Image = ""
+        local letter = CFG.IconLetter:sub(1,2):upper()
+        prevLetterLbl2.Text = letter
+        -- NOTE: iconBtn (Peli Editor icon) stays fixed
+        prevStatusLbl.Text  = "No ID — letter icon will be used"
+        prevStatusLbl.TextColor3 = EC.Dim
+    end
+end
+
+iconIdBox:GetPropertyChangedSignal("Text"):Connect(function()
+    applyIconId(iconIdBox.Text)
+end)
+iconIdBox.FocusLost:Connect(function()
+    iconIdBox.Text = CFG.IconId
+    applyIconId(iconIdBox.Text)
+end)
+tabBtns["ICON"].MouseButton1Click:Connect(function()
+    applyIconId(iconIdBox.Text)
+end)
+
+-- ── THEME TAB ──
+local themeTab = tabContainers["THEME"]
+themeTab.CanvasSize = UDim2.new(0,0,0,#THEMES*60+20)
+mkSection(themeTab,"CHOOSE A COLOR THEME",6)
+
+local themePreviewLbl = Instance.new("TextLabel",themeTab)
+themePreviewLbl.Size=UDim2.new(1,-8,0,16); themePreviewLbl.Position=UDim2.new(0,4,0,36)
+themePreviewLbl.BackgroundTransparency=1; themePreviewLbl.Text="Selected: "..THEMES[CFG.ThemeIndex].name
+themePreviewLbl.TextColor3=EC.Acc; themePreviewLbl.Font=Enum.Font.GothamBold
+themePreviewLbl.TextSize=10; themePreviewLbl.TextXAlignment=Enum.TextXAlignment.Left; themePreviewLbl.ZIndex=8
+
+local themeCards = {}
+for i,theme in ipairs(THEMES) do
+    local card = Instance.new("Frame",themeTab)
+    card.Size=UDim2.new(1,-8,0,48); card.Position=UDim2.new(0,4,0,58+(i-1)*54)
+    card.BackgroundColor3=Color3.fromRGB(theme.Panel[1],theme.Panel[2],theme.Panel[3])
+    card.BorderSizePixel=0; card.ZIndex=8; corner(card,10)
+    local str=stroke(card,i==CFG.ThemeIndex and Color3.fromRGB(theme.R[1],theme.R[2],theme.R[3]) or Color3.fromRGB(theme.Divider[1],theme.Divider[2],theme.Divider[3]),i==CFG.ThemeIndex and 2 or 1,i==CFG.ThemeIndex and 0 or 0.5)
+    for j,sc in ipairs({theme.R,theme.RL,theme.BG,theme.Row,theme.Dark}) do
+        local sw=Instance.new("Frame",card); sw.Size=UDim2.new(0,20,0,20); sw.Position=UDim2.new(0,8+(j-1)*26,0.5,-10)
+        sw.BackgroundColor3=Color3.fromRGB(sc[1],sc[2],sc[3]); sw.BorderSizePixel=0; sw.ZIndex=9; corner(sw,5)
+    end
+    local nameLbl=Instance.new("TextLabel",card)
+    nameLbl.Size=UDim2.new(0,200,1,0); nameLbl.Position=UDim2.new(0,148,0,0)
+    nameLbl.BackgroundTransparency=1; nameLbl.Text=theme.name; nameLbl.TextColor3=Color3.fromRGB(255,255,255)
+    nameLbl.Font=Enum.Font.GothamBold; nameLbl.TextSize=11; nameLbl.TextXAlignment=Enum.TextXAlignment.Left; nameLbl.ZIndex=9
+    local selBtn=Instance.new("TextButton",card)
+    selBtn.Size=UDim2.new(0,70,0,26); selBtn.Position=UDim2.new(1,-78,0.5,-13)
+    selBtn.Text=i==CFG.ThemeIndex and "✓ ACTIVE" or "SELECT"
+    selBtn.BackgroundColor3=Color3.fromRGB(theme.R[1],theme.R[2],theme.R[3]); selBtn.TextColor3=Color3.fromRGB(255,255,255)
+    selBtn.Font=Enum.Font.GothamBold; selBtn.TextSize=9; selBtn.BorderSizePixel=0; selBtn.ZIndex=10; corner(selBtn,7)
+    themeCards[i]={card=card,str=str,selBtn=selBtn,theme=theme}
+    selBtn.MouseButton1Click:Connect(function()
+        local old=themeCards[CFG.ThemeIndex]
+        if old then local ot=old.theme; old.str.Color=Color3.fromRGB(ot.Divider[1],ot.Divider[2],ot.Divider[3]); old.str.Thickness=1; old.str.Transparency=0.5; old.selBtn.Text="SELECT" end
+        CFG.ThemeIndex=i
+        str.Color=Color3.fromRGB(theme.R[1],theme.R[2],theme.R[3]); str.Thickness=2; str.Transparency=0; selBtn.Text="✓ ACTIVE"
+        themePreviewLbl.Text="Selected: "..theme.name
+    end)
+end
+
+-- ── FEATURES TAB ──
+local featTab = tabContainers["FEATURES"]
+featTab.CanvasSize = UDim2.new(0,0,0,980)
+
+mkSection(featTab,"PROTECTION",6)
+mkFeatureRow(featTab,"FName_ShieldMode",  "ShieldMode",  36)
+mkFeatureRow(featTab,"FName_RemoveWaves", "RemoveWaves", 94)
+
+mkSection(featTab,"PLATFORM TOOLS",158)
+mkFeatureRow(featTab,"FName_DuelWin",     "DuelWin",     188)
+mkFeatureRow(featTab,"FName_BigPlatform", "BigPlatform", 246)
+mkFeatureRow(featTab,"FName_AutoPlatform","AutoPlatform",304)
+
+mkSection(featTab,"COMBAT & MOVEMENT",368)
+mkFeatureRow(featTab,"FName_SuperJump",   "SuperJump",   398)
+mkFeatureRow(featTab,"FName_UltraSpin",   "UltraSpin",   456)
+
+mkSection(featTab,"VISUAL EFFECTS & ESP",520)
+mkFeatureRow(featTab,"FName_ESP",         "ESP",         550)
+mkFeatureRow(featTab,"FName_ESPNames",    "ESPNames",    608)
+mkFeatureRow(featTab,"FName_ESPDist",     "ESPDist",     666)
+mkFeatureRow(featTab,"FName_Tracers",     "Tracers",     724)
+
+mkSection(featTab,"LIGHTING & PERFORMANCE",788)
+mkFeatureRow(featTab,"FName_Fullbright",  "Fullbright",  818)
+mkFeatureRow(featTab,"FName_FPSBoost",    "FPSBoost",    876)
+
+-- ── GENERATE TAB ──
+local genTab = tabContainers["GENERATE"]
+genTab.CanvasSize = UDim2.new(0,0,0,420)
+
+local genInfo = Instance.new("Frame",genTab)
+genInfo.Size=UDim2.new(1,-8,0,50); genInfo.Position=UDim2.new(0,4,0,6)
+genInfo.BackgroundColor3=EC.Frame; genInfo.BorderSizePixel=0; genInfo.ZIndex=8; corner(genInfo,9); stroke(genInfo,EC.Acc,1,0.4)
+local genInfoGrad=Instance.new("Frame",genInfo); genInfoGrad.Size=UDim2.new(1,0,1,0)
+genInfoGrad.BackgroundColor3=EC.Acc; genInfoGrad.BackgroundTransparency=0.92; genInfoGrad.BorderSizePixel=0; genInfoGrad.ZIndex=8; corner(genInfoGrad,9)
+local genInfoTxt=Instance.new("TextLabel",genInfo); genInfoTxt.Size=UDim2.new(1,-12,1,0); genInfoTxt.Position=UDim2.new(0,6,0,0)
+genInfoTxt.BackgroundTransparency=1; genInfoTxt.Text="⚡ Generates a full Roli-style hub script\n   with your chosen theme, icon & features"
+genInfoTxt.TextColor3=EC.W; genInfoTxt.Font=Enum.Font.Gotham; genInfoTxt.TextSize=10; genInfoTxt.TextWrapped=true
+genInfoTxt.TextXAlignment=Enum.TextXAlignment.Left; genInfoTxt.ZIndex=9
+
+local themeBadge=Instance.new("Frame",genTab); themeBadge.Size=UDim2.new(1,-8,0,30); themeBadge.Position=UDim2.new(0,4,0,62)
+themeBadge.BackgroundColor3=EC.Panel; themeBadge.BorderSizePixel=0; themeBadge.ZIndex=8; corner(themeBadge,8); stroke(themeBadge,EC.Gray,1,0.5)
+local themeBadgeTxt=Instance.new("TextLabel",themeBadge); themeBadgeTxt.Size=UDim2.new(1,-10,1,0); themeBadgeTxt.Position=UDim2.new(0,5,0,0)
+themeBadgeTxt.BackgroundTransparency=1; themeBadgeTxt.TextColor3=EC.W; themeBadgeTxt.Font=Enum.Font.GothamBold
+themeBadgeTxt.TextSize=10; themeBadgeTxt.TextXAlignment=Enum.TextXAlignment.Left; themeBadgeTxt.ZIndex=9
+
+local generateBtn=Instance.new("TextButton",genTab); generateBtn.Size=UDim2.new(0.5,-6,0,40); generateBtn.Position=UDim2.new(0,4,0,100)
+generateBtn.Text="⚡  GENERATE"; generateBtn.BackgroundColor3=EC.Acc; generateBtn.TextColor3=EC.W
+generateBtn.Font=Enum.Font.GothamBold; generateBtn.TextSize=13; generateBtn.BorderSizePixel=0; generateBtn.ZIndex=8
+corner(generateBtn,10); stroke(generateBtn,EC.Acc,1.5,0.3)
+
+local copyBtn=Instance.new("TextButton",genTab); copyBtn.Size=UDim2.new(0.5,-6,0,40); copyBtn.Position=UDim2.new(0.5,2,0,100)
+copyBtn.Text="📋  COPY CODE"; copyBtn.BackgroundColor3=EC.Frame; copyBtn.TextColor3=EC.Dim
+copyBtn.Font=Enum.Font.GothamBold; copyBtn.TextSize=13; copyBtn.BorderSizePixel=0; copyBtn.ZIndex=8
+corner(copyBtn,10); stroke(copyBtn,EC.Gray,1,0.5)
+
+local previewBox=Instance.new("TextLabel",genTab); previewBox.Size=UDim2.new(1,-8,0,160); previewBox.Position=UDim2.new(0,4,0,148)
+previewBox.BackgroundColor3=EC.BG; previewBox.Text="Click ⚡ GENERATE to build your script..."
+previewBox.TextColor3=EC.Dim; previewBox.Font=Enum.Font.Code; previewBox.TextSize=8
+previewBox.TextWrapped=true; previewBox.TextXAlignment=Enum.TextXAlignment.Left; previewBox.TextYAlignment=Enum.TextYAlignment.Top
+previewBox.BorderSizePixel=0; previewBox.ZIndex=8; corner(previewBox,8); stroke(previewBox,EC.Gray,1,0.6)
+local pbPad=Instance.new("UIPadding",previewBox); pbPad.PaddingLeft=UDim.new(0,6); pbPad.PaddingTop=UDim.new(0,6); pbPad.PaddingRight=UDim.new(0,6)
+
+local charCountLbl=Instance.new("TextLabel",genTab); charCountLbl.Size=UDim2.new(1,-8,0,14); charCountLbl.Position=UDim2.new(0,4,0,314)
+charCountLbl.BackgroundTransparency=1; charCountLbl.Text=""; charCountLbl.TextColor3=EC.Dim
+charCountLbl.Font=Enum.Font.GothamBold; charCountLbl.TextSize=9; charCountLbl.TextXAlignment=Enum.TextXAlignment.Left; charCountLbl.ZIndex=8
+
+-- ══════════════════════════════════════════════════════════
+--  SCRIPT GENERATOR
+--  Секције у генерисаној скрипти:
+--    • "── PROTECTION ──"   (ShieldMode, RemoveWaves)
+--    • "── MAIN FEATURES ──" (DuelWin, BigPlatform, AutoPlatform)
+--    • "── COMBAT & MOVEMENT ──" (SuperJump, UltraSpin)
+--    • "── VISUAL ──"        (ESP, ESPNames, ESPDist, Tracers)
+--    • "── PERFORMANCE ──"   (Fullbright, FPSBoost)
+-- ══════════════════════════════════════════════════════════
+local function generateScript()
+    local c  = CFG
+    local th = THEMES[c.ThemeIndex]
+    local isMobile = (c.Platform == "Mobile")
+    local rawId = cleanId(c.IconId)
+    local fullIconAsset = (rawId ~= "") and ("rbxassetid://"..rawId) or ""
+    local function rgb(t) return t[1]..", "..t[2]..", "..t[3] end
+
+    local cfgLines = {}
+    if c.SuperJump    then table.insert(cfgLines,'    SuperJump     = false,') end
+    if c.AutoPlatform then table.insert(cfgLines,'    AutoPlatform  = false,') end
+    if c.DuelWin      then table.insert(cfgLines,'    DuelWin       = false,') end
+    if c.UltraSpin    then table.insert(cfgLines,'    UltraSpin     = false,') end
+    if c.BigPlatform  then table.insert(cfgLines,'    BigPlatform   = false,') end
+    if c.ShieldMode   then table.insert(cfgLines,'    ShieldMode    = false,') end
+    if c.RemoveWaves  then table.insert(cfgLines,'    RemoveWaves   = false,') end
+    if c.ESP          then table.insert(cfgLines,'    ESP           = false,') end
+    if c.ESPNames     then table.insert(cfgLines,'    ESPNames      = false,') end
+    if c.ESPDist      then table.insert(cfgLines,'    ESPDist       = false,') end
+    if c.Tracers      then table.insert(cfgLines,'    Tracers       = false,') end
+    if c.Fullbright   then table.insert(cfgLines,'    Fullbright    = false,') end
+    if c.FPSBoost     then table.insert(cfgLines,'    FPSBoost      = false,') end
+    table.insert(cfgLines,'    _shieldManual = false,')
+    table.insert(cfgLines,'    JumpPower     = 120,')
+    if #cfgLines <= 2 then notify("Enable at least one feature!"); return nil end
+
+    local letterToUse = (c.IconLetter:sub(1,2):upper() ~= "") and c.IconLetter:sub(1,2):upper() or "MH"
+    local tsize  = (#letterToUse>1) and "22" or "28"
+    local tsize2 = (#letterToUse>1) and "11" or "15"
+
+    local iconCode, topIconCode
+    if c.UseImageIcon and fullIconAsset ~= "" then
+        iconCode = [[
+local iconBtn = Instance.new("ImageButton", gui)
+iconBtn.Size = UDim2.new(0,0,0,0); iconBtn.Position = UDim2.new(0,15,0,15)
+iconBtn.BackgroundTransparency = 1; iconBtn.BorderSizePixel = 0; iconBtn.AutoButtonColor = false
+iconBtn.Image = "]]..fullIconAsset..[["
+iconBtn.ScaleType = Enum.ScaleType.Fit; iconBtn.Active = true; iconBtn.Draggable = true; iconBtn.ImageTransparency = 1
+task.spawn(function() task.wait(0.5) T(iconBtn,{Size=UDim2.new(0,50,0,50),ImageTransparency=0},0.7,Enum.EasingStyle.Back) end)]]
+        topIconCode = [[
+local topIcon = Instance.new("ImageLabel")
+topIcon.Size = UDim2.new(0,28,0,28); topIcon.Position = UDim2.new(0,8,0.5,-14)
+topIcon.BackgroundColor3 = C.BG; topIcon.Image = "]]..fullIconAsset..[["
+topIcon.ScaleType = Enum.ScaleType.Fit; topIcon.BorderSizePixel = 0; topIcon.ZIndex = 7; topIcon.Parent = header
+corner(topIcon,7)]]
+    else
+        iconCode = [[
+local iconBtn = Instance.new("TextButton", gui)
+iconBtn.Size = UDim2.new(0,0,0,0); iconBtn.Position = UDim2.new(0,15,0,15)
+iconBtn.BackgroundColor3 = C.BG; iconBtn.Text = "]]..letterToUse..[["
+iconBtn.TextColor3 = C.R; iconBtn.Font = Enum.Font.GothamBlack; iconBtn.TextSize = ]]..tsize..[[
+
+iconBtn.BorderSizePixel = 0; iconBtn.AutoButtonColor = false; iconBtn.Active = true; iconBtn.Draggable = true
+corner(iconBtn,12); stroke(iconBtn,C.R,2,0.2)
+task.spawn(function() task.wait(0.5) T(iconBtn,{Size=UDim2.new(0,50,0,50)},0.7,Enum.EasingStyle.Back) end)]]
+        topIconCode = [[
+local topIcon = Instance.new("TextLabel")
+topIcon.Size = UDim2.new(0,28,0,28); topIcon.Position = UDim2.new(0,8,0.5,-14)
+topIcon.BackgroundColor3 = C.BG; topIcon.Text = "]]..letterToUse..[["
+topIcon.TextColor3 = C.R; topIcon.Font = Enum.Font.GothamBlack; topIcon.TextSize = ]]..tsize2..[[
+
+topIcon.BorderSizePixel = 0; topIcon.ZIndex = 7; topIcon.Parent = header; corner(topIcon,7)]]
+    end
+
+    local frameW  = isMobile and 400 or 420
+    local frameH  = isMobile and 310 or 300
+    -- contentH = frameH - header(40) - infoPanel(42) - top offset(46) - bottom gap(8)
+    local contentH = frameH - 40 - 42 - 46 - 8   -- = 174 for 310, = 164 for 300
+
+    local espSection = ""
+    if c.ESP or c.ESPNames or c.ESPDist or c.Tracers then
+        espSection = [[
+
+-- == ESP ==
+local function clearESP(p)
+    if espCache[p] then for _,o in pairs(espCache[p]) do pcall(function() if o and o.Parent then o:Destroy() end end) end; espCache[p]=nil end
+    discK("esp_"..p.Name)
+end
+local function makeESP(targetPlr)
+    if targetPlr==plr or not CFG.ESP then return end
+    local char=targetPlr.Character; if not char then return end
+    pcall(function()
+        clearESP(targetPlr); espCache[targetPlr]={}
+        local hl=Instance.new("Highlight",char); hl.FillColor=C.R; hl.OutlineColor=Color3.fromRGB(255,255,255); hl.FillTransparency=0.6; hl.OutlineTransparency=0
+        table.insert(espCache[targetPlr],hl)
+        local head=char:FindFirstChild("Head")
+        if head then
+            local bill=Instance.new("BillboardGui",char); bill.Adornee=head; bill.Size=UDim2.new(0,130,0,40); bill.StudsOffset=Vector3.new(0,2,0); bill.AlwaysOnTop=true
+            local nl=Instance.new("TextLabel",bill); nl.Size=UDim2.new(1,0,0.5,0); nl.BackgroundTransparency=1; nl.Text=targetPlr.Name; nl.TextColor3=C.RL; nl.Font=Enum.Font.GothamBold; nl.TextSize=12; nl.TextStrokeTransparency=0.4; nl.Visible=CFG.ESPNames
+            local dl=Instance.new("TextLabel",bill); dl.Size=UDim2.new(1,0,0.5,0); dl.Position=UDim2.new(0,0,0.5,0); dl.BackgroundTransparency=1; dl.TextColor3=Color3.fromRGB(255,255,255); dl.Font=Enum.Font.GothamBold; dl.TextSize=10; dl.TextStrokeTransparency=0.5; dl.Visible=CFG.ESPDist
+            table.insert(espCache[targetPlr],bill)
+            local ldu=tick()
+            conn["esp_"..targetPlr.Name]=run.Heartbeat:Connect(function()
+                pcall(function()
+                    if not bill or not bill.Parent or not CFG.ESP then clearESP(targetPlr) return end
+                    nl.Visible=CFG.ESPNames; dl.Visible=CFG.ESPDist
+                    if CFG.ESPDist and tick()-ldu>=0.15 then
+                        local mh=plr.Character and plr.Character:FindFirstChild("HumanoidRootPart"); local th2=char:FindFirstChild("HumanoidRootPart")
+                        if mh and th2 then dl.Text="["..math.floor((mh.Position-th2.Position).Magnitude).."M]" end; ldu=tick()
+                    end
+                end)
+            end)
+        end
+        if CFG.Tracers then
+            local hrp=char:FindFirstChild("HumanoidRootPart")
+            if hrp and plr.Character then
+                local mh=plr.Character:FindFirstChild("HumanoidRootPart")
+                if mh then
+                    local a1=Instance.new("Attachment",hrp); local a2=Instance.new("Attachment",mh)
+                    local bm=Instance.new("Beam",a1); bm.Attachment0=a1; bm.Attachment1=a2; bm.Color=ColorSequence.new(C.R); bm.FaceCamera=true; bm.Width0=0.1; bm.Width1=0.1
+                    table.insert(espCache[targetPlr],a1); table.insert(espCache[targetPlr],a2); table.insert(espCache[targetPlr],bm)
+                end
+            end
+        end
+    end)
+end]]
+    end
+
+    local removeWavesSection = c.RemoveWaves and [[
+
+-- == REMOVE WAVES ==
+local function doRemoveWaves()
+    local w=game:GetService("Workspace"):FindFirstChild("Waves"); if w then w:Destroy() end
+end]] or ""
+
+    -- ══════════════════════════════════════════════════════
+    --  BUILD TOGGLE ROWS WITH SECTION DIVIDERS
+    --  Секције које ће се приказати у генерисаној скрипти:
+    --    PROTECTION  │  MAIN FEATURES  │  COMBAT & MOVEMENT  │  VISUAL  │  PERFORMANCE
+    -- ══════════════════════════════════════════════════════
+    local leftTogCode  = {}
+    local rightTogCode = {}
+    local ly, ry = 6, 6
+
+    -- Helper: adds a visual section label frame into a column of the generated script
+    local function addSectionDivider(col, title, yVar)
+        -- We emit Lua code that builds a small section header frame at runtime
+        -- col = "leftCol" or "rightCol"
+        local code = [[
+do
+    local _sec=Instance.new("Frame",]]..col..[[); _sec.Size=UDim2.new(1,0,0,18); _sec.Position=UDim2.new(0,0,0,]]..yVar..[[)
+    _sec.BackgroundColor3=C.Panel; _sec.BorderSizePixel=0; _sec.ZIndex=7; corner(_sec,5)
+    local _sl=Instance.new("Frame",_sec); _sl.Size=UDim2.new(0,3,0,10); _sl.Position=UDim2.new(0,5,0.5,-5)
+    _sl.BackgroundColor3=C.R; _sl.BorderSizePixel=0; _sl.ZIndex=8; corner(_sl,2)
+    local _st=Instance.new("TextLabel",_sec); _st.Size=UDim2.new(1,-14,1,0); _st.Position=UDim2.new(0,12,0,0)
+    _st.BackgroundTransparency=1; _st.Text="]]..title..[["
+    _st.TextColor3=C.R; _st.Font=Enum.Font.GothamBold; _st.TextSize=8; _st.TextXAlignment=Enum.TextXAlignment.Left; _st.ZIndex=8
+end]]
+        return code
+    end
+
+    -- ── LEFT COLUMN ──
+    -- Section: PROTECTION
+    if c.ShieldMode or c.RemoveWaves then
+        table.insert(leftTogCode, addSectionDivider("leftCol","── PROTECTION ──", ly))
+        ly = ly + 22
+        if c.ShieldMode   then table.insert(leftTogCode,'mkToggle(leftCol,"'..c.FName_ShieldMode..'","ShieldMode",shieldMini,duelMini,bigMini,spinMini,'..ly..')'); ly=ly+30 end
+        if c.RemoveWaves  then table.insert(leftTogCode,'mkToggle(leftCol,"'..c.FName_RemoveWaves..'","RemoveWaves",shieldMini,duelMini,bigMini,spinMini,'..ly..')'); ly=ly+30 end
+        ly = ly + 6
+    end
+
+    -- Section: MAIN FEATURES
+    if c.DuelWin or c.BigPlatform or c.AutoPlatform then
+        table.insert(leftTogCode, addSectionDivider("leftCol","── MAIN FEATURES ──", ly))
+        ly = ly + 22
+        if c.DuelWin      then table.insert(leftTogCode,'mkToggle(leftCol,"'..c.FName_DuelWin..'","DuelWin",shieldMini,duelMini,bigMini,spinMini,'..ly..')'); ly=ly+30 end
+        if c.BigPlatform  then table.insert(leftTogCode,'mkToggle(leftCol,"'..c.FName_BigPlatform..'","BigPlatform",shieldMini,duelMini,bigMini,spinMini,'..ly..')'); ly=ly+30 end
+        if c.AutoPlatform then table.insert(leftTogCode,'mkToggle(leftCol,"'..c.FName_AutoPlatform..'","AutoPlatform",shieldMini,duelMini,bigMini,spinMini,'..ly..')'); ly=ly+30 end
+        ly = ly + 6
+    end
+
+    -- ── RIGHT COLUMN ──
+    -- Section: COMBAT & MOVEMENT
+    if c.SuperJump or c.UltraSpin then
+        table.insert(rightTogCode, addSectionDivider("rightCol","── COMBAT & MOVEMENT ──", ry))
+        ry = ry + 22
+        if c.SuperJump  then table.insert(rightTogCode,'mkToggle(rightCol,"'..c.FName_SuperJump..'","SuperJump",shieldMini,duelMini,bigMini,spinMini,'..ry..')'); ry=ry+30 end
+        if c.UltraSpin  then table.insert(rightTogCode,'mkToggle(rightCol,"'..c.FName_UltraSpin..'","UltraSpin",shieldMini,duelMini,bigMini,spinMini,'..ry..')'); ry=ry+30 end
+        ry = ry + 6
+    end
+
+    -- Section: VISUAL
+    if c.ESP or c.ESPNames or c.ESPDist or c.Tracers then
+        table.insert(rightTogCode, addSectionDivider("rightCol","── VISUAL ──", ry))
+        ry = ry + 22
+        if c.ESP      then table.insert(rightTogCode,'mkToggle(rightCol,"'..c.FName_ESP..'","ESP",shieldMini,duelMini,bigMini,spinMini,'..ry..')'); ry=ry+30 end
+        if c.ESPNames then table.insert(rightTogCode,'mkToggle(rightCol,"'..c.FName_ESPNames..'","ESPNames",shieldMini,duelMini,bigMini,spinMini,'..ry..')'); ry=ry+30 end
+        if c.ESPDist  then table.insert(rightTogCode,'mkToggle(rightCol,"'..c.FName_ESPDist..'","ESPDist",shieldMini,duelMini,bigMini,spinMini,'..ry..')'); ry=ry+30 end
+        if c.Tracers  then table.insert(rightTogCode,'mkToggle(rightCol,"'..c.FName_Tracers..'","Tracers",shieldMini,duelMini,bigMini,spinMini,'..ry..')'); ry=ry+30 end
+        ry = ry + 6
+    end
+
+    -- Section: PERFORMANCE (right column continued)
+    if c.Fullbright or c.FPSBoost then
+        table.insert(rightTogCode, addSectionDivider("rightCol","── PERFORMANCE ──", ry))
+        ry = ry + 22
+        if c.Fullbright then table.insert(rightTogCode,'mkToggle(rightCol,"'..c.FName_Fullbright..'","Fullbright",shieldMini,duelMini,bigMini,spinMini,'..ry..')'); ry=ry+30 end
+        if c.FPSBoost   then table.insert(rightTogCode,'mkToggle(rightCol,"'..c.FName_FPSBoost..'","FPSBoost",shieldMini,duelMini,bigMini,spinMini,'..ry..')'); ry=ry+30 end
+    end
+
+    local script = [[-- ╔══════════════════════════════════════════╗
+-- ║   ]]..c.ScriptName..[[ · ]]..c.ScriptSubtitle..[[
+-- ║   Generated with PELI EDITOR v6
+-- ╚══════════════════════════════════════════╝
+
+local plr=game.Players.LocalPlayer; local uis=game:GetService("UserInputService")
+local run=game:GetService("RunService"); local tw=game:GetService("TweenService")
+local ws=game:GetService("Workspace"); local rs=game:GetService("ReplicatedStorage")
+local Players=game:GetService("Players"); local light=game:GetService("Lighting")
+local debris=game:GetService("Debris"); local vUser=game:GetService("VirtualUser")
+
+plr.Idled:Connect(function() vUser:CaptureController() vUser:ClickButton2(Vector2.new()) end)
+
+-- == CONFIG ==
+local CFG = {
+]]..table.concat(cfgLines,"\n")..[[
+
+}
+
+-- == STATE ==
+local conn={}; local espCache={}
+local spinAngle=0; local SPIN_SPEED=720
+local duelPlatPart=nil; local duelLiftConn=nil
+local bigPlatPart=nil;  local bigLiftConn=nil
+
+-- == COLORS ==
+local C = {
+    BG=Color3.fromRGB(]]..rgb(th.BG)..[[),Panel=Color3.fromRGB(]]..rgb(th.Panel)..[[),
+    Row=Color3.fromRGB(]]..rgb(th.Row)..[[),RowOn=Color3.fromRGB(]]..rgb(th.RowOn)..[[),
+    Dark=Color3.fromRGB(]]..rgb(th.Dark)..[[),Divider=Color3.fromRGB(]]..rgb(th.Divider)..[[),
+    R=Color3.fromRGB(]]..rgb(th.R)..[[),RL=Color3.fromRGB(]]..rgb(th.RL)..[[),
+    RD=Color3.fromRGB(]]..rgb(th.RD)..[[),
+    RDim=Color3.fromRGB(]]..math.max(0,th.R[1]-80)..", "..math.max(0,th.R[2]-80)..", "..math.max(0,th.R[3]-80)..[[),
+    Dim=Color3.fromRGB(]]..rgb(th.Dim)..[[),W=Color3.fromRGB(255,255,255),K=Color3.fromRGB(0,0,0),G=Color3.fromRGB(50,210,50),
+}
+
+-- == UTILS ==
+local function T(o,p,d,s) if not o or not o.Parent then return end tw:Create(o,TweenInfo.new(d or .2,s or Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play() end
+local function corner(p,r) local c=Instance.new("UICorner",p) c.CornerRadius=UDim.new(0,r or 8) return c end
+local function stroke(p,col,th2,tr) local s=Instance.new("UIStroke",p) s.Color=col s.Thickness=th2 or 1 if tr then s.Transparency=tr end return s end
+local function grad(p,c1,c2,rot) local g=Instance.new("UIGradient",p) g.Color=ColorSequence.new{ColorSequenceKeypoint.new(0,c1),ColorSequenceKeypoint.new(1,c2)} g.Rotation=rot or 90 end
+local function discK(k) if conn[k] then pcall(function() conn[k]:Disconnect() end) conn[k]=nil end end
+local function notify(t,tx,d) pcall(function() game:GetService("StarterGui"):SetCore("SendNotification",{Title=t,Text=tx,Duration=d or 3}) end) end
+]]..espSection..removeWavesSection..[[
+
+-- == SHIELD ==
+local function setupAntiDie()
+    local char=plr.Character or plr.CharacterAdded:Wait()
+    local hum=char:FindFirstChildOfClass("Humanoid") if not hum then return end
+    hum.BreakJointsOnDeath=false; hum:SetStateEnabled(Enum.HumanoidStateType.Dead,false)
+    hum.Died:Connect(function()
+        if not CFG.ShieldMode then return end; task.wait()
+        local nh=Instance.new("Humanoid"); nh.Parent=char
+        if ws.CurrentCamera then ws.CurrentCamera.CameraSubject=nh end; hum:Destroy()
+    end)
+end
+local function silentShieldOn() if CFG.ShieldMode then return end; CFG.ShieldMode=true; pcall(setupAntiDie) end
+local function silentShieldOff() if not CFG._shieldManual then CFG.ShieldMode=false end end
+local function doSpin()
+    local char=plr.Character if not char then return end
+    local hrp=char:FindFirstChild("HumanoidRootPart") if not hrp then return end
+    local ang=0; local el=0; discK("activSpin")
+    conn.activSpin=run.Heartbeat:Connect(function(dt)
+        el=el+dt; if el>=1.5 then discK("activSpin") return end
+        ang=(ang+SPIN_SPEED*dt)%360
+        pcall(function() if hrp and hrp.Parent then hrp.CFrame=CFrame.new(hrp.Position)*CFrame.Angles(0,math.rad(ang),0) end end)
+    end)
+end
+local function startSpin()
+    CFG.ShieldMode=true; pcall(setupAntiDie); spinAngle=0; discK("ultraSpin")
+    conn.ultraSpin=run.Heartbeat:Connect(function(dt)
+        if not CFG.UltraSpin then return end
+        local char=plr.Character if not char then return end
+        local hrp=char:FindFirstChild("HumanoidRootPart") if not hrp then return end
+        spinAngle=(spinAngle+SPIN_SPEED*dt)%360; hrp.CFrame=CFrame.new(hrp.Position)*CFrame.Angles(0,math.rad(spinAngle),0)
+    end)
+end
+local function stopSpin() discK("ultraSpin"); spinAngle=0; CFG.ShieldMode=false end
+
+local function makeLift(name,cx,groundY,cz,sx,sz,topY,spd)
+    local plat=Instance.new("Part",ws); plat.Name=name; plat.Size=Vector3.new(sx,0.4,sz); plat.CFrame=CFrame.new(cx,groundY,cz)
+    plat.Anchored=true; plat.CanCollide=true; plat.Material=Enum.Material.Neon; plat.Color=C.R; plat.Transparency=1; plat.CastShadow=false
+    T(plat,{Transparency=0.35},0.5)
+    local targetY=groundY; local lc
+    lc=run.Heartbeat:Connect(function(dt)
+        if not plat or not plat.Parent then lc:Disconnect() return end
+        local char=plr.Character; local hrp=char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then local hp=hrp.Position; local pp=plat.Position; local on=(math.abs(hp.X-pp.X)<sx/2+1 and math.abs(hp.Z-pp.Z)<sz/2+1 and hp.Y>pp.Y-1 and hp.Y<pp.Y+5); targetY=on and topY or groundY end
+        local cur=plat.Position.Y; local diff=targetY-cur
+        if math.abs(diff)>0.04 then
+            local mv=math.sign(diff)*math.min(math.abs(diff),spd*dt); local ny=math.clamp(cur+mv,groundY,topY)
+            plat.CFrame=CFrame.new(cx,ny,cz)
+            if hrp and mv>0 then local hp2=hrp.Position; local pp2=plat.Position; if math.abs(hp2.X-pp2.X)<sx/2+1 and math.abs(hp2.Z-pp2.Z)<sz/2+1 and hp2.Y>pp2.Y-2 and hp2.Y<pp2.Y+5 then hrp.CFrame=hrp.CFrame+Vector3.new(0,mv,0) end end
+        end
+    end)
+    return plat,lc
+end
+
+local DUELPLAT={cx=-455.08,cy=-7.03,cz=59.37,sx=29.76,sz=1200}
+local BIG_TOP_Y=-2.23-1.2+2.5; local DUEL_TOP_Y=BIG_TOP_Y
+local function clearDuel()
+    if duelLiftConn then duelLiftConn:Disconnect(); duelLiftConn=nil end
+    if duelPlatPart and duelPlatPart.Parent then T(duelPlatPart,{Transparency=1},0.3); debris:AddItem(duelPlatPart,0.35); duelPlatPart=nil end
+end
+local function buildDuel()
+    clearDuel()
+    local char=plr.Character; local hrp=char and char:FindFirstChild("HumanoidRootPart")
+    local px=hrp and hrp.Position.X or DUELPLAT.cx; local pz=hrp and hrp.Position.Z or DUELPLAT.cz
+    duelPlatPart=Instance.new("Part",ws); duelPlatPart.Name="Script_DuelPlatform"
+    duelPlatPart.Size=Vector3.new(DUELPLAT.sx,0.4,DUELPLAT.sz); duelPlatPart.CFrame=CFrame.new(px,DUEL_TOP_Y,pz)
+    duelPlatPart.Anchored=true; duelPlatPart.CanCollide=true; duelPlatPart.Material=Enum.Material.Neon; duelPlatPart.Color=C.R; duelPlatPart.Transparency=0.35
+    if hrp then hrp.CFrame=CFrame.new(px,DUEL_TOP_Y+3,pz) end
+    local groundY2=DUEL_TOP_Y-10; local targetY2=DUEL_TOP_Y
+    duelLiftConn=run.Heartbeat:Connect(function(dt)
+        if not duelPlatPart or not duelPlatPart.Parent then duelLiftConn:Disconnect() return end
+        local c2=plr.Character; local h2=c2 and c2:FindFirstChild("HumanoidRootPart")
+        if h2 then local hp2=h2.Position; local pp2=duelPlatPart.Position; local on=(math.abs(hp2.X-pp2.X)<DUELPLAT.sx/2+2 and math.abs(hp2.Z-pp2.Z)<600+2 and hp2.Y>pp2.Y-1 and hp2.Y<pp2.Y+6); targetY2=on and DUEL_TOP_Y or groundY2 end
+        local cur2=duelPlatPart.Position.Y; local diff2=targetY2-cur2
+        if math.abs(diff2)>0.02 then
+            local mv2=math.sign(diff2)*math.min(math.abs(diff2),24*dt); local ny2=math.clamp(cur2+mv2,groundY2,DUEL_TOP_Y)
+            duelPlatPart.CFrame=CFrame.new(px,ny2,pz)
+            if h2 and mv2>0 then local hp3=h2.Position; local pp3=duelPlatPart.Position; if math.abs(hp3.X-pp3.X)<DUELPLAT.sx/2+2 and math.abs(hp3.Z-pp3.Z)<600+2 and hp3.Y>pp3.Y-2 and hp3.Y<pp3.Y+6 then h2.CFrame=h2.CFrame+Vector3.new(0,mv2,0) end end
+        end
+    end)
+end
+
+local BIGPLAT={cx=-409.44,cy=-2.23,cz=67.92,sx=107.40,sz=334.18}
+local function clearBig()
+    if bigLiftConn then bigLiftConn:Disconnect(); bigLiftConn=nil end
+    if bigPlatPart and bigPlatPart.Parent then T(bigPlatPart,{Transparency=1},0.35); debris:AddItem(bigPlatPart,0.4); bigPlatPart=nil end
+end
+local function buildBig() clearBig(); bigPlatPart,bigLiftConn=makeLift("Script_BigPlatform",BIGPLAT.cx,BIGPLAT.cy-8,BIGPLAT.cz,BIGPLAT.sx,BIGPLAT.sz,BIG_TOP_Y,18) end
+
+-- ============================================================
+--  GUI  (]]..frameW.." × "..frameH..[[)
+-- ============================================================
+local gui=Instance.new("ScreenGui")
+gui.Name="]]..c.ScriptName:gsub("%s","_")..[["
+gui.ResetOnSpawn=false; gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+pcall(function() gui.Parent=game:GetService("CoreGui") end)
+if not gui.Parent then gui.Parent=plr.PlayerGui end
+
+]]..iconCode..[[
+
+local MW,MH=]]..frameW..","..(isMobile and 310 or 300)..[[
+
+local mainFrame=Instance.new("Frame",gui)
+mainFrame.Size=UDim2.new(0,MW,0,MH); mainFrame.Position=UDim2.new(0.5,-MW/2,0.5,-MH/2)
+mainFrame.BackgroundColor3=C.BG; mainFrame.BorderSizePixel=0; mainFrame.Active=true; mainFrame.Draggable=true
+mainFrame.Visible=false; mainFrame.ClipsDescendants=true; mainFrame.ZIndex=5
+corner(mainFrame,10); stroke(mainFrame,C.R,1,0.3)
+
+local bgOv=Instance.new("Frame",mainFrame); bgOv.Size=UDim2.new(1,0,1,0); bgOv.BackgroundColor3=C.BG; bgOv.BackgroundTransparency=0; bgOv.BorderSizePixel=0; bgOv.ZIndex=5; corner(bgOv,10)
+
+local header=Instance.new("Frame",mainFrame); header.Size=UDim2.new(1,0,0,40); header.BackgroundColor3=C.Dark; header.BorderSizePixel=0; header.ZIndex=6; corner(header,10)
+grad(header,C.R,C.BG)
+]]..topIconCode..[[
+
+local titleLbl=Instance.new("TextLabel",header); titleLbl.Size=UDim2.new(0,180,0,20); titleLbl.Position=UDim2.new(0,44,0,4)
+titleLbl.BackgroundTransparency=1; titleLbl.Text="]]..c.ScriptName..[["
+titleLbl.TextColor3=C.W; titleLbl.Font=Enum.Font.GothamBold; titleLbl.TextSize=15; titleLbl.TextXAlignment=Enum.TextXAlignment.Left; titleLbl.ZIndex=7
+
+local subLbl=Instance.new("TextLabel",header); subLbl.Size=UDim2.new(0,200,0,12); subLbl.Position=UDim2.new(0,44,0,24)
+subLbl.BackgroundTransparency=1; subLbl.Text="]]..c.ScriptSubtitle..[["
+subLbl.TextColor3=C.Dim; subLbl.Font=Enum.Font.Gotham; subLbl.TextSize=9; subLbl.TextXAlignment=Enum.TextXAlignment.Left; subLbl.ZIndex=7
+
+local closeBtn=Instance.new("TextButton",header); closeBtn.Size=UDim2.new(0,26,0,26); closeBtn.Position=UDim2.new(1,-32,0.5,-13)
+closeBtn.Text="X"; closeBtn.BackgroundColor3=C.R; closeBtn.TextColor3=C.W; closeBtn.Font=Enum.Font.GothamBold; closeBtn.TextSize=13
+closeBtn.BorderSizePixel=0; closeBtn.AutoButtonColor=false; closeBtn.ZIndex=8; corner(closeBtn,6)
+
+local contentF=Instance.new("ScrollingFrame",mainFrame); contentF.Size=UDim2.new(1,-16,0,]]..tostring(frameH-40-42-8)..[[); contentF.Position=UDim2.new(0,8,0,44)
+contentF.BackgroundTransparency=1; contentF.ZIndex=6; contentF.ClipsDescendants=true
+contentF.ScrollBarThickness=0; contentF.ScrollingEnabled=false; contentF.CanvasSize=UDim2.new(0,0,0,0)
+
+-- Left and right columns are ScrollingFrames so content clips and scrolls within infoPanel boundary
+local leftCol=Instance.new("ScrollingFrame",contentF); leftCol.Size=UDim2.new(0.48,0,1,0); leftCol.BackgroundTransparency=1; leftCol.ZIndex=6
+leftCol.ScrollBarThickness=3; leftCol.ScrollBarImageColor3=C.R; leftCol.ScrollingDirection=Enum.ScrollingDirection.Y
+leftCol.ClipsDescendants=true; leftCol.BorderSizePixel=0
+local rightCol=Instance.new("ScrollingFrame",contentF); rightCol.Size=UDim2.new(0.48,0,1,0); rightCol.Position=UDim2.new(0.52,0,0,0); rightCol.BackgroundTransparency=1; rightCol.ZIndex=6
+rightCol.ScrollBarThickness=3; rightCol.ScrollBarImageColor3=C.R; rightCol.ScrollingDirection=Enum.ScrollingDirection.Y
+rightCol.ClipsDescendants=true; rightCol.BorderSizePixel=0
+
+local infoPanel=Instance.new("Frame",mainFrame); infoPanel.Size=UDim2.new(1,-16,0,34); infoPanel.Position=UDim2.new(0,8,1,-42)
+infoPanel.BackgroundColor3=C.Panel; infoPanel.BorderSizePixel=0; infoPanel.ZIndex=6; corner(infoPanel,7); stroke(infoPanel,C.R,1,0.5)
+
+local avatarImg=Instance.new("ImageLabel",infoPanel); avatarImg.Size=UDim2.new(0,26,0,26); avatarImg.Position=UDim2.new(0,4,0.5,-13)
+avatarImg.BackgroundColor3=C.Row; avatarImg.BorderSizePixel=0; avatarImg.ZIndex=7; corner(avatarImg,13); stroke(avatarImg,C.R,1.5,0)
+pcall(function() avatarImg.Image="https://www.roblox.com/headshot-thumbnail/image?userId="..plr.UserId.."&width=150&height=150&format=png" end)
+
+local fpsLbl=Instance.new("TextLabel",infoPanel); fpsLbl.Size=UDim2.new(0,70,0,13); fpsLbl.Position=UDim2.new(0,36,0,3)
+fpsLbl.BackgroundTransparency=1; fpsLbl.Text="FPS: 60"; fpsLbl.TextColor3=C.W; fpsLbl.Font=Enum.Font.GothamBold; fpsLbl.TextSize=9; fpsLbl.TextXAlignment=Enum.TextXAlignment.Left; fpsLbl.ZIndex=7
+
+local plrsLbl=Instance.new("TextLabel",infoPanel); plrsLbl.Size=UDim2.new(0,80,0,13); plrsLbl.Position=UDim2.new(0,36,0,18)
+plrsLbl.BackgroundTransparency=1; plrsLbl.Text="Players: 0"; plrsLbl.TextColor3=C.Dim; plrsLbl.Font=Enum.Font.GothamBold; plrsLbl.TextSize=9; plrsLbl.TextXAlignment=Enum.TextXAlignment.Left; plrsLbl.ZIndex=7
+
+local sep1=Instance.new("Frame",infoPanel); sep1.Size=UDim2.new(0,1,0,24); sep1.Position=UDim2.new(0,120,0.5,-12); sep1.BackgroundColor3=C.Divider; sep1.BackgroundTransparency=0.2; sep1.BorderSizePixel=0; sep1.ZIndex=7
+local actLbl=Instance.new("TextLabel",infoPanel); actLbl.Size=UDim2.new(0,90,0,13); actLbl.Position=UDim2.new(0,127,0,3)
+actLbl.BackgroundTransparency=1; actLbl.Text="Active: 0"; actLbl.TextColor3=C.W; actLbl.Font=Enum.Font.GothamBold; actLbl.TextSize=9; actLbl.TextXAlignment=Enum.TextXAlignment.Left; actLbl.ZIndex=7
+local shieldLbl=Instance.new("TextLabel",infoPanel); shieldLbl.Size=UDim2.new(0,90,0,13); shieldLbl.Position=UDim2.new(0,127,0,18)
+shieldLbl.BackgroundTransparency=1; shieldLbl.Text="Shield: OFF"; shieldLbl.TextColor3=C.Dim; shieldLbl.Font=Enum.Font.GothamBold; shieldLbl.TextSize=9; shieldLbl.TextXAlignment=Enum.TextXAlignment.Left; shieldLbl.ZIndex=7
+local sep2=Instance.new("Frame",infoPanel); sep2.Size=UDim2.new(0,1,0,24); sep2.Position=UDim2.new(0,222,0.5,-12); sep2.BackgroundColor3=C.Divider; sep2.BackgroundTransparency=0.2; sep2.BorderSizePixel=0; sep2.ZIndex=7
+local brandLbl=Instance.new("TextLabel",infoPanel); brandLbl.Size=UDim2.new(0,140,1,0); brandLbl.Position=UDim2.new(0,228,0,0)
+brandLbl.BackgroundTransparency=1; brandLbl.Text="]]..c.ScriptName..[["
+brandLbl.TextColor3=C.R; brandLbl.Font=Enum.Font.GothamBold; brandLbl.TextSize=11; brandLbl.TextXAlignment=Enum.TextXAlignment.Center; brandLbl.TextYAlignment=Enum.TextYAlignment.Center; brandLbl.ZIndex=7
+
+local frmCnt=0; local lastFPSt=tick()
+conn.infoPanelLoop=run.Heartbeat:Connect(function()
+    frmCnt=frmCnt+1
+    if tick()-lastFPSt>=1 then fpsLbl.Text="FPS: "..frmCnt; frmCnt=0; lastFPSt=tick() end
+    plrsLbl.Text="Players: "..#Players:GetPlayers()
+    local ac=0; for _,v in pairs(CFG) do if v==true then ac=ac+1 end end; actLbl.Text="Active: "..ac
+    if CFG.ShieldMode then shieldLbl.Text="Shield: ON"; shieldLbl.TextColor3=C.R else shieldLbl.Text="Shield: OFF"; shieldLbl.TextColor3=C.Dim end
+end)
+
+local function mkMini(title,icon,offY,onOn,onOff)
+    local p=Instance.new("Frame",gui); p.Name="Mini_"..title; p.Size=UDim2.new(0,140,0,72); p.AnchorPoint=Vector2.new(1,0)
+    p.Position=UDim2.new(1,150,0.5,offY); p.BackgroundColor3=C.Panel; p.BorderSizePixel=0; p.Active=true; p.Draggable=true; p.ZIndex=25; p.Visible=false
+    corner(p,9); stroke(p,C.R,1.5,0.2)
+    local ph=Instance.new("Frame",p); ph.Size=UDim2.new(1,0,0,24); ph.BackgroundColor3=C.RD; ph.BorderSizePixel=0; ph.ZIndex=26; corner(ph,9); grad(ph,C.R,C.RD)
+    local pt=Instance.new("TextLabel",ph); pt.Size=UDim2.new(1,-8,1,0); pt.Position=UDim2.new(0,8,0,0)
+    pt.BackgroundTransparency=1; pt.Text=icon.." "..string.upper(title); pt.TextColor3=C.W; pt.Font=Enum.Font.GothamBold; pt.TextSize=9; pt.TextXAlignment=Enum.TextXAlignment.Left; pt.ZIndex=27
+    local ps=Instance.new("TextLabel",p); ps.Size=UDim2.new(1,-8,0,12); ps.Position=UDim2.new(0,8,0,28)
+    ps.BackgroundTransparency=1; ps.Text="● OFF"; ps.TextColor3=C.Dim; ps.Font=Enum.Font.GothamBold; ps.TextSize=8; ps.TextXAlignment=Enum.TextXAlignment.Left; ps.ZIndex=26
+    local pb=Instance.new("TextButton",p); pb.Size=UDim2.new(1,-10,0,20); pb.Position=UDim2.new(0,5,0,48)
+    pb.BackgroundColor3=C.Row; pb.Text="ACTIVATE"; pb.TextColor3=C.W; pb.Font=Enum.Font.GothamBold; pb.TextSize=9; pb.BorderSizePixel=0; pb.AutoButtonColor=false; pb.ZIndex=26
+    corner(pb,5); stroke(pb,C.R,1,0.4)
+    local isOn=false
+    local function setOn(val)
+        isOn=val
+        if val then T(pb,{BackgroundColor3=C.R},0.15); pb.Text="DEACTIVATE"; ps.Text="● ACTIVE"; ps.TextColor3=C.RL; if onOn then onOn() end
+        else T(pb,{BackgroundColor3=C.Row},0.15); pb.Text="ACTIVATE"; ps.Text="● OFF"; ps.TextColor3=C.Dim; if onOff then onOff() end end
+    end
+    pb.MouseButton1Click:Connect(function() setOn(not isOn) end)
+    local function show() p.Visible=true; T(p,{Position=UDim2.new(1,-6,0.5,offY)},0.28,Enum.EasingStyle.Back) end
+    local function hide(sk) if not sk and isOn then setOn(false) end; isOn=false; T(p,{Position=UDim2.new(1,150,0.5,offY)},0.2); task.delay(0.22,function() if p and p.Parent then p.Visible=false end end) end
+    return {show=show,hide=hide,isActive=function() return isOn end,setActive=setOn}
+end
+
+local duelMini=mkMini("]]..c.FName_DuelWin..[[","🏁",-55,function() CFG.DuelWin=true; task.spawn(function() silentShieldOn(); task.wait(1); buildDuel() end) end,function() CFG.DuelWin=false; clearDuel(); silentShieldOff() end)
+local spinMini=mkMini("]]..c.FName_UltraSpin..[[","🌀",20,function() CFG.UltraSpin=true; startSpin() end,function() CFG.UltraSpin=false; stopSpin() end)
+local bigMini=mkMini("]]..c.FName_BigPlatform..[[","🟥",95,function() CFG.BigPlatform=true; task.spawn(function() silentShieldOn(); task.wait(1); buildBig() end) end,function() CFG.BigPlatform=false; clearBig(); silentShieldOff() end)
+local shieldMini=mkMini("]]..c.FName_ShieldMode..[[","🛡",-55,function() CFG.ShieldMode=true; CFG._shieldManual=true; pcall(setupAntiDie); doSpin() end,function() CFG.ShieldMode=false; CFG._shieldManual=false end)
+
+local function mkToggle(parent,text,key,sm,dm,bm,sp,posY,cb)
+    local ct=Instance.new("Frame",parent); ct.Size=UDim2.new(1,0,0,24); ct.Position=UDim2.new(0,0,0,posY)
+    ct.BackgroundColor3=C.Row; ct.BorderSizePixel=0; ct.ZIndex=7; corner(ct,6); stroke(ct,C.R,1,0.5)
+    local lbl=Instance.new("TextLabel",ct); lbl.Size=UDim2.new(0,110,1,0); lbl.Position=UDim2.new(0,8,0,0)
+    lbl.BackgroundTransparency=1; lbl.Text=text; lbl.TextColor3=C.W; lbl.Font=Enum.Font.GothamBold; lbl.TextSize=9; lbl.TextXAlignment=Enum.TextXAlignment.Left; lbl.ZIndex=8
+    local tog=Instance.new("TextButton",ct); tog.Size=UDim2.new(0,36,0,16); tog.Position=UDim2.new(1,-40,0.5,-8)
+    tog.BackgroundColor3=C.Panel; tog.Text=""; tog.BorderSizePixel=0; tog.AutoButtonColor=false; tog.ZIndex=8; corner(tog,8)
+    local ind=Instance.new("Frame",tog); ind.Size=UDim2.new(0,14,0,14); ind.Position=UDim2.new(0,1,0.5,-7); ind.BackgroundColor3=C.Dim; ind.BorderSizePixel=0; ind.ZIndex=9; corner(ind,7)
+    tog.MouseButton1Click:Connect(function()
+        CFG[key]=not CFG[key]; local on=CFG[key]
+        if on then T(ind,{Position=UDim2.new(1,-15,0.5,-7),BackgroundColor3=C.R},0.2); T(tog,{BackgroundColor3=C.RDim},0.2)
+        else T(ind,{Position=UDim2.new(0,1,0.5,-7),BackgroundColor3=C.Dim},0.2); T(tog,{BackgroundColor3=C.Panel},0.2) end
+        if key=="ShieldMode" then CFG._shieldManual=on; if on then sm.show() else CFG.ShieldMode=false; sm.hide(true) end
+        elseif key=="DuelWin" then if on then dm.show() else CFG.DuelWin=false; clearDuel(); silentShieldOff(); dm.hide(true) end
+        elseif key=="BigPlatform" then if on then bm.show() else CFG.BigPlatform=false; clearBig(); silentShieldOff(); bm.hide(true) end
+        elseif key=="UltraSpin" then if on then sp.show() else CFG.UltraSpin=false; stopSpin(); sp.hide(true) end
+        elseif key=="RemoveWaves" then if on then doRemoveWaves() end end
+        if cb then cb(on) end
+    end)
+    return ct
+end
+
+]]..table.concat(leftTogCode,"\n")..[[
+
+]]..table.concat(rightTogCode,"\n")..[[
+
+-- Auto-set canvas so columns scroll correctly and never overflow infoPanel
+leftCol.CanvasSize=UDim2.new(0,0,0,]]..ly..[[)
+rightCol.CanvasSize=UDim2.new(0,0,0,]]..ry..[[)
+
+local function openFrame() mainFrame.Size=UDim2.new(0,0,0,0); mainFrame.Position=UDim2.new(0.5,0,0.5,0); mainFrame.Visible=true; T(mainFrame,{Size=UDim2.new(0,MW,0,MH),Position=UDim2.new(0.5,-MW/2,0.5,-MH/2)},0.5,Enum.EasingStyle.Back) end
+local function hideFrame() T(mainFrame,{Size=UDim2.new(0,0,0,0),Position=UDim2.new(0.5,0,0.5,0)},0.4); task.delay(0.41,function() mainFrame.Visible=false; mainFrame.Size=UDim2.new(0,MW,0,MH); mainFrame.Position=UDim2.new(0.5,-MW/2,0.5,-MH/2) end) end
+
+iconBtn.MouseButton1Click:Connect(function() if mainFrame.Visible then hideFrame() else openFrame() end end)
+closeBtn.MouseButton1Click:Connect(function()
+    clearDuel(); clearBig()
+    for p2,_ in pairs(espCache) do clearESP(p2) end
+    for _,c2 in pairs(conn) do pcall(function() c2:Disconnect() end) end
+    gui:Destroy()
+end)
+
+]]..( c.SuperJump and [[conn.superJump=uis.JumpRequest:Connect(function()
+    if not CFG.SuperJump then return end
+    local char=plr.Character; if not char then return end
+    local hum=char:FindFirstChildWhichIsA("Humanoid"); local hrp=char:FindFirstChild("HumanoidRootPart")
+    if hum and hrp then hum:ChangeState(Enum.HumanoidStateType.Jumping); task.wait(0.05); hrp.Velocity=Vector3.new(hrp.Velocity.X,CFG.JumpPower,hrp.Velocity.Z) end
+end)
+]] or "")..( c.AutoPlatform and [[local isJumping=false; local maxH=0; local lastVY=0; local platDeb=false
+conn.autoPlatform=run.Heartbeat:Connect(function()
+    if not CFG.AutoPlatform then isJumping=false; maxH=0; lastVY=0; return end
+    local char=plr.Character; if not char then return end
+    local hrp=char:FindFirstChild("HumanoidRootPart"); local hum=char:FindFirstChildWhichIsA("Humanoid"); if not hrp or not hum then return end
+    local curH=hrp.Position.Y; local curVY=hrp.AssemblyLinearVelocity.Y; local state=hum:GetState()
+    if state==Enum.HumanoidStateType.Jumping and not isJumping then isJumping=true; maxH=curH; platDeb=false end
+    if isJumping then if curH>maxH then maxH=curH end
+        if lastVY>0 and curVY<=0 and not platDeb then platDeb=true
+            local plat=Instance.new("Part",ws); plat.Name="Script_Platform"; plat.Size=Vector3.new(5,0.4,5); plat.Position=Vector3.new(hrp.Position.X,maxH-3,hrp.Position.Z)
+            plat.Anchored=true; plat.CanCollide=true; plat.Material=Enum.Material.Neon; plat.Color=C.R; plat.Transparency=0.35
+            task.delay(60,function() if plat and plat.Parent then T(plat,{Transparency=1},0.5); debris:AddItem(plat,0.6) end end)
+        end
+    end
+    if state==Enum.HumanoidStateType.Landed or state==Enum.HumanoidStateType.Running then if isJumping then isJumping=false; maxH=0 end end
+    lastVY=curVY
+end)
+]] or "")..( c.Fullbright and [[conn.visual=run.Heartbeat:Connect(function()
+    if CFG.Fullbright then pcall(function() light.Brightness=2; light.ClockTime=14; light.FogEnd=100000; light.GlobalShadows=false; light.OutdoorAmbient=Color3.fromRGB(128,128,128) end) end
+end)
+]] or "")..[[
+plr.CharacterAdded:Connect(function()
+    task.wait(0.5); if CFG.ShieldMode then setupAntiDie() end; task.wait(1)
+    if CFG.ESP then for _,p in pairs(Players:GetPlayers()) do if p~=plr then task.spawn(function() makeESP(p) end) end end end
+end)
+Players.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(function() task.wait(1); if CFG.ESP then task.spawn(function() makeESP(p) end) end end) end)
+Players.PlayerRemoving:Connect(function(p) clearESP(p) end)
+
+print("]]..c.ScriptName..[[ loaded!")
+notify("]]..c.ScriptName..[[","]]..c.ScriptSubtitle..[[ loaded!",4)
+]]
+    return script
+end
+
+-- ══════════════════════════════════════════════════════════
+--  GENERATE / COPY
+-- ══════════════════════════════════════════════════════════
+generateBtn.MouseButton1Click:Connect(function()
+    T(generateBtn,{Size=UDim2.new(0.48,-4,0,36)},0.08); task.wait(0.09); T(generateBtn,{Size=UDim2.new(0.5,-6,0,40)},0.08)
+    local th=THEMES[CFG.ThemeIndex]
+    themeBadgeTxt.Text="Theme: "..th.name.."   |   Platform: "..(CFG.Platform or "PC").."   |   "..CFG.ScriptName
+    generatedScript = generateScript()
+    if generatedScript then
+        previewBox.Text = generatedScript:sub(1,600).."\n\n... ["..#generatedScript.." chars total]"
+        previewBox.TextColor3 = EC.W
+        charCountLbl.Text = "✓ Generated  |  "..#generatedScript.." chars  |  Ready to copy"
+        T(copyBtn,{BackgroundColor3=EC.Acc,TextColor3=EC.W},0.2)
+        generateBtn.Text="✓  DONE!"; T(generateBtn,{BackgroundColor3=EC.Green},0.2)
+        task.wait(1.5); generateBtn.Text="⚡  GENERATE"; T(generateBtn,{BackgroundColor3=EC.Acc},0.2)
+        notify("Generated successfully!")
+    end
+end)
+
+copyBtn.MouseButton1Click:Connect(function()
+    if generatedScript=="" then notify("Generate first!"); return end
+    T(copyBtn,{Size=UDim2.new(0.48,-4,0,36)},0.08); task.wait(0.09); T(copyBtn,{Size=UDim2.new(0.5,-6,0,40)},0.08)
+    pcall(function() setclipboard(generatedScript) end)
+    copyBtn.Text="✓  COPIED!"; T(copyBtn,{BackgroundColor3=EC.Green},0.2); notify("Copied to clipboard!")
+    task.wait(1.8); copyBtn.Text="📋  COPY CODE"; T(copyBtn,{BackgroundColor3=EC.Acc},0.2)
+end)
+
+-- ══════════════════════════════════════════════════════════
+--  PLATFORM SELECT HANDLERS
+-- ══════════════════════════════════════════════════════════
+local platSelected = false
+
+local function launchEditor(platform)
+    if platSelected then return end
+    platSelected = true
+    CFG.Platform = platform
+    platBadgeTxt.Text = (platform=="Mobile") and "📱 Mobile" or "🖥 PC"
+
+    local w = (platform=="Mobile") and MW_MB or MW_PC
+    local h = (platform=="Mobile") and MH_MB or MH_PC
+
+    T(platMenu,{Size=UDim2.new(0,0,0,0),Position=UDim2.new(0.5,0,0.5,0)},0.28)
+    task.delay(0.30, function() if platMenu and platMenu.Parent then platMenu:Destroy() end end)
+
+    -- Show Peli Editor's own icon (always fixed)
+    iconBtn.Visible = true
+    iconBtn.Size = UDim2.new(0,0,0,0)
+    T(iconBtn,{Size=UDim2.new(0,56,0,56)},0.45,Enum.EasingStyle.Back)
+
+    task.spawn(function()
+        while iconBtn and iconBtn.Parent and iconBtn.Visible do
+            T(iconGlow,{BackgroundTransparency=0.6},1.2); task.wait(1.2)
+            T(iconGlow,{BackgroundTransparency=0.88},1.2); task.wait(1.2)
+        end
+    end)
+
+    task.wait(0.12)
+    mainFrame.Size=UDim2.new(0,0,0,0); mainFrame.Position=UDim2.new(0.5,0,0.5,0); mainFrame.Visible=true
+    T(mainFrame,{Size=UDim2.new(0,w,0,h),Position=UDim2.new(0.5,-w/2,0.5,-h/2)},0.5,Enum.EasingStyle.Back)
+
+    notify("Peli Editor v6  ·  "..platform.." mode")
+end
+
+pcBtn.MouseButton1Click:Connect(function() launchEditor("PC") end)
+mobileBtn.MouseButton1Click:Connect(function() launchEditor("Mobile") end)
+
+-- ══════════════════════════════════════════════════════════
+--  EDITOR OPEN / CLOSE
+-- ══════════════════════════════════════════════════════════
+local menuOpen = false
+
+iconBtn.MouseButton1Click:Connect(function()
+    menuOpen = not menuOpen
+    local w = (CFG.Platform=="Mobile") and MW_MB or MW_PC
+    local h = (CFG.Platform=="Mobile") and MH_MB or MH_PC
+    if menuOpen then
+        mainFrame.Size=UDim2.new(0,0,0,0); mainFrame.Position=UDim2.new(0.5,0,0.5,0); mainFrame.Visible=true
+        T(mainFrame,{Size=UDim2.new(0,w,0,h),Position=UDim2.new(0.5,-w/2,0.5,-h/2)},0.45,Enum.EasingStyle.Back)
+    else
+        T(mainFrame,{Size=UDim2.new(0,0,0,0),Position=UDim2.new(0.5,0,0.5,0)},0.3)
+        task.wait(0.32); mainFrame.Visible=false; menuOpen=false
+    end
+end)
+
+minimizeBtn.MouseButton1Click:Connect(function()
+    menuOpen=false
+    T(mainFrame,{Size=UDim2.new(0,0,0,0),Position=UDim2.new(0.5,0,0.5,0)},0.3)
+    task.wait(0.32); mainFrame.Visible=false
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    notify("Peli Editor closed")
+    T(mainFrame,{Size=UDim2.new(0,0,0,0),Position=UDim2.new(0.5,0,0.5,0)},0.3)
+    T(iconBtn,{Size=UDim2.new(0,0,0,0)},0.3)
+    task.wait(0.35); pcall(function() screenGui:Destroy() end)
+end)
+
+print("PELI EDITOR v6.2 Loaded — Select platform to begin.")
+notify("PELI EDITOR v6.2 — Select platform to begin.")
