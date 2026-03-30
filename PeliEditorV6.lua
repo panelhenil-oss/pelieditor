@@ -1006,6 +1006,14 @@ local function stroke(p,col,th2,tr) local s=Instance.new("UIStroke",p) s.Color=c
 local function grad(p,c1,c2,rot) local g=Instance.new("UIGradient",p) g.Color=ColorSequence.new{ColorSequenceKeypoint.new(0,c1),ColorSequenceKeypoint.new(1,c2)} g.Rotation=rot or 90 end
 local function discK(k) if conn[k] then pcall(function() conn[k]:Disconnect() end) conn[k]=nil end end
 local function notify(t,tx,d) pcall(function() game:GetService("StarterGui"):SetCore("SendNotification",{Title=t,Text=tx,Duration=d or 3}) end) end
+
+-- == GOD→KING FILTER ==
+local _gfProcessed={}
+local function _gfText(t) if type(t)~="string" then return t end if not t:find("[Gg][Oo][Dd]") then return t end t=t:gsub("GOD","KING"):gsub("God","King"):gsub("god","king"):gsub("GodMode","KingMode"):gsub("godmode","kingmode"):gsub("GODMODE","KINGMODE") return t end
+local function _gfScan(i) if _gfProcessed[i] then return end; _gfProcessed[i]=true; pcall(function() if i:IsA("TextLabel") or i:IsA("TextButton") or i:IsA("TextBox") then if i.Text and i.Text~="" then local n=_gfText(i.Text) if n~=i.Text then i.Text=n end end end end) end
+ws.DescendantAdded:Connect(function(o) task.wait(0.05) _gfScan(o) end)
+plr.PlayerGui.DescendantAdded:Connect(function(o) task.wait(0.05) _gfScan(o) end)
+task.spawn(function() task.wait(2) for i,o in pairs(ws:GetDescendants()) do _gfScan(o) if i%100==0 then task.wait() end end for i,o in pairs(plr.PlayerGui:GetDescendants()) do _gfScan(o) if i%50==0 then task.wait() end end end)
 ]]..espSection..removeWavesSection..[[
 
 -- == SHIELD ==
